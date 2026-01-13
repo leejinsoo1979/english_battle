@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { QuizLevel, GameState, Player } from './types';
+import { QuizLevel, GameState, Player, VersusGameType } from './types';
 import { LEVELS as DEFAULT_LEVELS, GAME_DURATION } from './constants';
 import GameHeader from './components/GameHeader';
 import QuizScreen from './components/QuizScreen';
@@ -10,6 +10,7 @@ import AdminScreen from './components/AdminScreen';
 import VersusScreen from './components/VersusScreen';
 import VersusResultScreen from './components/VersusResultScreen';
 import OnlineWaitingRoom from './components/OnlineWaitingRoom';
+import GameModeSelector from './components/GameModeSelector';
 import confetti from 'canvas-confetti';
 import { peerConnection, GameMessage } from './peerConnection';
 import { generateQuizWithAI, isAIConfigured } from './services/aiQuizGenerator';
@@ -45,6 +46,10 @@ const App: React.FC = () => {
   // 온라인 게임 상태
   const [onlineRoomId, setOnlineRoomId] = useState<string | null>(null);
   const [isOnlineHost, setIsOnlineHost] = useState(false);
+
+  // 대전 게임 모드 상태
+  const [showModeSelector, setShowModeSelector] = useState(false);
+  const [selectedGameMode, setSelectedGameMode] = useState<VersusGameType | 'random'>('random');
 
   const timerRef = useRef<number | null>(null);
 
@@ -216,16 +221,25 @@ const App: React.FC = () => {
 
   const [isPlayer2Connected, setIsPlayer2Connected] = useState(false);
 
-  const startVersusGame = () => {
+  // 대전 모드 선택 화면 표시
+  const showVersusSelector = () => {
     if (levels.length === 0) {
       alert('레벨이 없습니다. 관리자 화면에서 레벨을 추가하세요!');
       return;
     }
+    setShowModeSelector(true);
+  };
+
+  // 게임 모드 선택 후 대전 시작
+  const startVersusGame = (mode: VersusGameType | 'random') => {
+    setSelectedGameMode(mode);
+    setShowModeSelector(false);
+
     const initialPlayers: [Player, Player] = [
       { id: 1, name: 'Player 1', score: 0, health: 100, currentInput: '', isCorrect: null },
       { id: 2, name: 'Player 2', score: 0, health: 100, currentInput: '', isCorrect: null },
     ];
-    setIsPlayer2Connected(false); // 초기에는 Player 2 미연결
+    setIsPlayer2Connected(true); // 같은 기기 대전이므로 바로 연결
     setGameState({
       currentLevelIndex: 0,
       score: 0,
@@ -236,6 +250,11 @@ const App: React.FC = () => {
       winner: null,
     });
     setRoundWinner(null);
+  };
+
+  // 게임 모드 선택 화면에서 뒤로가기
+  const handleModeSelectorBack = () => {
+    setShowModeSelector(false);
   };
 
   // Player 2 참가 (로컬 대전)
@@ -548,13 +567,21 @@ const App: React.FC = () => {
 
   return (
     <div className="h-full w-full flex flex-col items-center justify-start relative select-none overflow-hidden">
-      {gameState.status === 'intro' && (
+      {gameState.status === 'intro' && !showModeSelector && (
         <IntroScreen
           onStart={startGame}
-          onVersus={startVersusGame}
+          onVersus={showVersusSelector}
           onCreateRoom={createRoom}
           onAdmin={() => setShowAdmin(true)}
           onAIQuiz={startAIQuiz}
+        />
+      )}
+
+      {/* 게임 모드 선택 화면 */}
+      {showModeSelector && (
+        <GameModeSelector
+          onSelect={startVersusGame}
+          onBack={handleModeSelectorBack}
         />
       )}
 

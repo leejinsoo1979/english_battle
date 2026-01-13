@@ -91,11 +91,9 @@ Example response:
 
     const generated: GeneratedQuiz = JSON.parse(jsonStr);
 
-    // Generate image URL using Pollinations.ai
-    const imagePrompt = encodeURIComponent(
-      `high quality photo of a ${generated.targetWord}, realistic, clear, no text, no words, no letters, no watermark, professional photography`
-    );
-    const imageUrl = `https://image.pollinations.ai/prompt/${imagePrompt}?width=512&height=512&nologo=true&seed=${Date.now()}`;
+    // Generate image URL using Unsplash (free, real photos)
+    const searchQuery = encodeURIComponent(generated.targetWord);
+    const imageUrl = `https://source.unsplash.com/512x512/?${searchQuery}`;
 
     // Find indices for phonics rule highlighting
     const indices: number[] = [];
