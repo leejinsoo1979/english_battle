@@ -8,9 +8,10 @@ interface Props {
   onCreateRoom: () => void;
   onAdmin: () => void;
   onAIQuiz: () => void;
+  onQuizShow: () => void;
 }
 
-const IntroScreen: React.FC<Props> = ({ onStart, onVersus, onCreateRoom, onAdmin, onAIQuiz }) => {
+const IntroScreen: React.FC<Props> = ({ onStart, onVersus, onCreateRoom, onAdmin, onAIQuiz, onQuizShow }) => {
   return (
     <div className="h-full w-full relative overflow-hidden" style={{ backgroundColor: '#fef8ed' }}>
       {/* Decorative Background Elements */}
@@ -122,6 +123,29 @@ const IntroScreen: React.FC<Props> = ({ onStart, onVersus, onCreateRoom, onAdmin
             {/* Coming Soon Badge */}
             <div className="absolute -top-1 -right-1 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
               NEW
+            </div>
+          </button>
+
+          {/* 퀴즈쇼 모드 - Premium Button */}
+          <button
+            onClick={onQuizShow}
+            className="group relative w-full overflow-hidden rounded-2xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600" />
+            <div className="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            {/* Animated Glow */}
+            <div className="absolute inset-0 opacity-50 group-hover:opacity-100 transition-opacity">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+            </div>
+            <div className="relative px-8 py-4 flex items-center justify-center gap-3">
+              <i className="fa-solid fa-tv text-white/90 text-lg"></i>
+              <span className="text-white font-bold text-lg tracking-wide">퀴즈쇼</span>
+              <span className="text-white/70 text-sm font-medium">(4인 대전)</span>
+            </div>
+            <div className="absolute inset-0 border-2 border-white/20 rounded-2xl" />
+            {/* Hot Badge */}
+            <div className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg animate-pulse">
+              🔥 HOT
             </div>
           </button>
         </div>

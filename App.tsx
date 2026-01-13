@@ -11,6 +11,7 @@ import VersusScreen from './components/VersusScreen';
 import VersusResultScreen from './components/VersusResultScreen';
 import OnlineWaitingRoom from './components/OnlineWaitingRoom';
 import GameModeSelector from './components/GameModeSelector';
+import QuizShowScreen from './components/QuizShowScreen';
 import confetti from 'canvas-confetti';
 import { peerConnection, GameMessage } from './peerConnection';
 import { generateQuizWithAI, isAIConfigured } from './services/aiQuizGenerator';
@@ -574,7 +575,12 @@ const App: React.FC = () => {
           onCreateRoom={createRoom}
           onAdmin={() => setShowAdmin(true)}
           onAIQuiz={startAIQuiz}
+          onQuizShow={() => setGameState(prev => ({ ...prev, status: 'quiz-show' }))}
         />
+      )}
+
+      {gameState.status === 'quiz-show' && (
+        <QuizShowScreen onExit={resetGame} playerCount={4} />
       )}
 
       {/* 게임 모드 선택 화면 */}

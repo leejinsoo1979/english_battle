@@ -3,7 +3,16 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { QuizLevel, Player, VersusGameType } from '../types';
 import robotImage from './images/robot.png';
 import { playSound } from '../utils/sounds';
-import { SpeedTypingGame, ScrambleGame, ListeningGame } from './versus-games';
+import {
+  SpeedTypingGame,
+  ScrambleGame,
+  ListeningGame,
+  FallingLettersGame,
+  WordShooterGame,
+  MemoryMatchGame,
+  WordSnakeGame,
+  BombGame
+} from './versus-games';
 
 // 라운드 시작 효과 컴포넌트
 const RoundStartEffect: React.FC<{ round: number; onComplete: () => void }> = ({ round, onComplete }) => {
@@ -492,6 +501,11 @@ const GAME_TYPES: { type: VersusGameType; name: string; icon: string; color: str
   { type: 'speed-typing', name: '스피드 타이핑', icon: 'fa-keyboard', color: 'from-green-500 to-emerald-500' },
   { type: 'scramble', name: '단어 스크램블', icon: 'fa-shuffle', color: 'from-purple-500 to-pink-500' },
   { type: 'listening', name: '듣고 맞추기', icon: 'fa-headphones', color: 'from-cyan-500 to-blue-500' },
+  { type: 'falling-letters', name: '떨어지는 글자', icon: 'fa-arrow-down', color: 'from-orange-500 to-amber-500' },
+  { type: 'word-shooter', name: '풍선 슈터', icon: 'fa-crosshairs', color: 'from-pink-500 to-rose-500' },
+  { type: 'memory-match', name: '메모리 매치', icon: 'fa-clone', color: 'from-purple-500 to-violet-500' },
+  { type: 'word-snake', name: '뱀 게임', icon: 'fa-snake', color: 'from-green-500 to-emerald-500' },
+  { type: 'bomb', name: '폭탄 해제', icon: 'fa-bomb', color: 'from-red-500 to-orange-500' },
 ];
 
 interface Props {

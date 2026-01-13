@@ -118,6 +118,104 @@ const ListenThumbnail = () => (
   </svg>
 );
 
+// 새로운 게임 썸네일들
+const FallingThumbnail = () => (
+  <svg viewBox="0 0 80 80" className="w-full h-full">
+    <defs>
+      <linearGradient id="fallGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#f97316" />
+        <stop offset="100%" stopColor="#ea580c" />
+      </linearGradient>
+    </defs>
+    <rect x="15" y="8" width="14" height="14" rx="3" fill="url(#fallGrad)" />
+    <text x="22" y="18" fontSize="9" fill="white" fontWeight="bold" textAnchor="middle">A</text>
+    <rect x="35" y="20" width="14" height="14" rx="3" fill="url(#fallGrad)" />
+    <text x="42" y="30" fontSize="9" fill="white" fontWeight="bold" textAnchor="middle">B</text>
+    <rect x="55" y="35" width="14" height="14" rx="3" fill="url(#fallGrad)" />
+    <text x="62" y="45" fontSize="9" fill="white" fontWeight="bold" textAnchor="middle">C</text>
+    <rect x="25" y="50" width="14" height="14" rx="3" fill="url(#fallGrad)" />
+    <text x="32" y="60" fontSize="9" fill="white" fontWeight="bold" textAnchor="middle">D</text>
+    <path d="M40 5 L40 75" stroke="#f97316" strokeWidth="1" strokeDasharray="4 4" opacity="0.5" />
+    <path d="M20 70 L60 70" stroke="#ef4444" strokeWidth="3" strokeLinecap="round" />
+    <circle cx="40" cy="70" r="3" fill="#ef4444" />
+  </svg>
+);
+
+const ShooterThumbnail = () => (
+  <svg viewBox="0 0 80 80" className="w-full h-full">
+    <defs>
+      <linearGradient id="shootGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#ec4899" />
+        <stop offset="100%" stopColor="#be185d" />
+      </linearGradient>
+    </defs>
+    <ellipse cx="20" cy="25" rx="10" ry="12" fill="url(#shootGrad)" />
+    <text x="20" y="29" fontSize="10" fill="white" fontWeight="bold" textAnchor="middle">A</text>
+    <ellipse cx="50" cy="20" rx="10" ry="12" fill="url(#shootGrad)" />
+    <text x="50" y="24" fontSize="10" fill="white" fontWeight="bold" textAnchor="middle">B</text>
+    <ellipse cx="65" cy="45" rx="10" ry="12" fill="url(#shootGrad)" />
+    <text x="65" y="49" fontSize="10" fill="white" fontWeight="bold" textAnchor="middle">C</text>
+    <circle cx="35" cy="55" r="8" stroke="#ec4899" strokeWidth="2" fill="none" />
+    <line x1="35" y1="45" x2="35" y2="65" stroke="#ec4899" strokeWidth="2" />
+    <line x1="25" y1="55" x2="45" y2="55" stroke="#ec4899" strokeWidth="2" />
+  </svg>
+);
+
+const MemoryThumbnail = () => (
+  <svg viewBox="0 0 80 80" className="w-full h-full">
+    <defs>
+      <linearGradient id="memGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#a855f7" />
+        <stop offset="100%" stopColor="#7c3aed" />
+      </linearGradient>
+    </defs>
+    <rect x="10" y="10" width="25" height="30" rx="4" fill="url(#memGrad)" />
+    <text x="22.5" y="30" fontSize="14" fill="white" fontWeight="bold" textAnchor="middle">?</text>
+    <rect x="45" y="10" width="25" height="30" rx="4" fill="#fbbf24" />
+    <text x="57.5" y="30" fontSize="12" fill="white" fontWeight="bold" textAnchor="middle">A</text>
+    <rect x="10" y="45" width="25" height="30" rx="4" fill="#22c55e" />
+    <text x="22.5" y="65" fontSize="12" fill="white" fontWeight="bold" textAnchor="middle">#1</text>
+    <rect x="45" y="45" width="25" height="30" rx="4" fill="url(#memGrad)" />
+    <text x="57.5" y="65" fontSize="14" fill="white" fontWeight="bold" textAnchor="middle">?</text>
+  </svg>
+);
+
+const SnakeThumbnail = () => (
+  <svg viewBox="0 0 80 80" className="w-full h-full">
+    <defs>
+      <linearGradient id="snakeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#22c55e" />
+        <stop offset="100%" stopColor="#15803d" />
+      </linearGradient>
+    </defs>
+    <rect x="5" y="5" width="70" height="70" rx="4" fill="#1f2937" stroke="#374151" strokeWidth="1" />
+    <rect x="15" y="35" width="10" height="10" rx="2" fill="url(#snakeGrad)" />
+    <rect x="25" y="35" width="10" height="10" rx="2" fill="url(#snakeGrad)" opacity="0.8" />
+    <rect x="35" y="35" width="10" height="10" rx="2" fill="url(#snakeGrad)" opacity="0.6" />
+    <rect x="55" y="20" width="12" height="12" rx="2" fill="#fbbf24" />
+    <text x="61" y="29" fontSize="8" fill="white" fontWeight="bold" textAnchor="middle">A</text>
+    <rect x="25" y="55" width="12" height="12" rx="2" fill="#6b7280" />
+    <text x="31" y="64" fontSize="8" fill="white" fontWeight="bold" textAnchor="middle">X</text>
+  </svg>
+);
+
+const BombThumbnail = () => (
+  <svg viewBox="0 0 80 80" className="w-full h-full">
+    <defs>
+      <linearGradient id="bombGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#ef4444" />
+        <stop offset="100%" stopColor="#b91c1c" />
+      </linearGradient>
+    </defs>
+    <circle cx="40" cy="45" r="22" fill="#1f2937" stroke="url(#bombGrad)" strokeWidth="3" />
+    <rect x="35" y="18" width="10" height="8" rx="2" fill="#6b7280" />
+    <path d="M40 18 Q45 8, 55 12" stroke="#f97316" strokeWidth="3" fill="none" strokeLinecap="round" />
+    <circle cx="55" cy="12" r="5" fill="#fbbf24" />
+    <text x="40" y="52" fontSize="16" fill="url(#bombGrad)" fontWeight="bold" textAnchor="middle">15</text>
+    <text x="40" y="62" fontSize="8" fill="#9ca3af" textAnchor="middle">SEC</text>
+  </svg>
+);
+
 const GAME_MODES: GameModeOption[] = [
   {
     type: 'random',
@@ -158,6 +256,46 @@ const GAME_MODES: GameModeOption[] = [
     gradient: 'from-cyan-400 via-sky-500 to-blue-500',
     shadowColor: 'rgba(14, 165, 233, 0.4)',
     thumbnail: <ListenThumbnail />,
+  },
+  {
+    type: 'falling-letters',
+    name: 'FALLING',
+    description: '떨어지는 글자를 잡아라',
+    gradient: 'from-orange-500 via-amber-500 to-yellow-500',
+    shadowColor: 'rgba(249, 115, 22, 0.4)',
+    thumbnail: <FallingThumbnail />,
+  },
+  {
+    type: 'word-shooter',
+    name: 'SHOOTER',
+    description: '풍선을 쏴라',
+    gradient: 'from-pink-500 via-rose-500 to-red-500',
+    shadowColor: 'rgba(236, 72, 153, 0.4)',
+    thumbnail: <ShooterThumbnail />,
+  },
+  {
+    type: 'memory-match',
+    name: 'MEMORY',
+    description: '카드를 매칭하라',
+    gradient: 'from-purple-500 via-violet-500 to-indigo-500',
+    shadowColor: 'rgba(168, 85, 247, 0.4)',
+    thumbnail: <MemoryThumbnail />,
+  },
+  {
+    type: 'word-snake',
+    name: 'SNAKE',
+    description: '뱀으로 글자를 먹어라',
+    gradient: 'from-green-500 via-emerald-500 to-teal-500',
+    shadowColor: 'rgba(34, 197, 94, 0.4)',
+    thumbnail: <SnakeThumbnail />,
+  },
+  {
+    type: 'bomb',
+    name: 'BOMB',
+    description: '폭탄이 터지기 전에!',
+    gradient: 'from-red-500 via-orange-500 to-yellow-500',
+    shadowColor: 'rgba(239, 68, 68, 0.4)',
+    thumbnail: <BombThumbnail />,
   },
 ];
 
@@ -218,8 +356,8 @@ const GameModeSelector: React.FC<Props> = ({ onSelect, onBack }) => {
           <div className="mt-3 h-[2px] w-32 mx-auto bg-gradient-to-r from-transparent via-white/30 to-transparent" />
         </motion.div>
 
-        {/* 게임 모드 카드 - 한 줄 배치 */}
-        <div className="flex justify-center gap-5 w-full mb-10 overflow-x-auto px-4">
+        {/* 게임 모드 카드 - 2줄 배치 */}
+        <div className="flex flex-wrap justify-center gap-4 w-full mb-10 max-w-6xl px-4">
           {GAME_MODES.map((mode, index) => {
             const isSelected = selectedMode === mode.type;
             const isHovered = hoveredMode === mode.type;
@@ -233,7 +371,7 @@ const GameModeSelector: React.FC<Props> = ({ onSelect, onBack }) => {
                 onClick={() => setSelectedMode(mode.type)}
                 onMouseEnter={() => setHoveredMode(mode.type)}
                 onMouseLeave={() => setHoveredMode(null)}
-                className={`relative flex-shrink-0 w-56 h-72 rounded-2xl transition-all duration-300 ${
+                className={`relative flex-shrink-0 w-40 h-52 rounded-2xl transition-all duration-300 ${
                   isSelected
                     ? 'scale-105'
                     : 'hover:scale-[1.02]'
@@ -259,23 +397,23 @@ const GameModeSelector: React.FC<Props> = ({ onSelect, onBack }) => {
                 {/* 카드 내용 */}
                 <div className="relative h-full flex flex-col items-center justify-between p-4">
                   {/* 썸네일 이미지 */}
-                  <div className={`w-full h-40 rounded-xl overflow-hidden transition-all duration-300 ${
+                  <div className={`w-full h-24 rounded-xl overflow-hidden transition-all duration-300 ${
                     isSelected ? 'bg-white/10' : 'bg-gray-900/50'
                   }`}>
                     {mode.thumbnail}
                   </div>
 
                   {/* 하단 정보 */}
-                  <div className="text-center mt-3">
+                  <div className="text-center mt-2">
                     {/* 타이틀 */}
-                    <h3 className={`text-xl font-bold tracking-wide transition-colors duration-300 ${
+                    <h3 className={`text-sm font-bold tracking-wide transition-colors duration-300 ${
                       isSelected ? 'text-white' : 'text-gray-200'
                     }`}>
                       {mode.name}
                     </h3>
 
                     {/* 설명 */}
-                    <p className={`text-sm mt-1 transition-colors duration-300 ${
+                    <p className={`text-xs mt-1 transition-colors duration-300 ${
                       isSelected ? 'text-white/80' : 'text-gray-500'
                     }`}>
                       {mode.description}
