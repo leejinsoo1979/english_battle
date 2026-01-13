@@ -1,0 +1,68 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phonics Master</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        html, body, #root {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: #fef8ed;
+            overflow: hidden;
+            user-select: none;
+        }
+        .font-fredoka {
+            font-family: 'Fredoka One', cursive;
+        }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-5px); }
+          75% { transform: translateX(5px); }
+        }
+        .animate-shake {
+          animation: shake 0.2s ease-in-out infinite;
+        }
+        @keyframes rainbow {
+          0% { color: #f87171; }
+          25% { color: #fbbf24; }
+          50% { color: #34d399; }
+          75% { color: #60a5fa; }
+          100% { color: #f87171; }
+        }
+        .animate-rainbow {
+          animation: rainbow 2s linear infinite;
+        }
+        @keyframes spotlight {
+          0% { opacity: 0; transform: translate(-72%, -62%) scale(0.5); }
+          100% { opacity: 1; transform: translate(-50%, -40%) scale(1); }
+        }
+        .animate-spotlight {
+          animation: spotlight 2s ease .75s 1 forwards;
+        }
+        .loader {
+          width: 48px;
+          height: 48px;
+          border: 3px solid rgba(255, 255, 255, 0.3);
+          border-radius: 50%;
+          border-top-color: #fff;
+          animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
