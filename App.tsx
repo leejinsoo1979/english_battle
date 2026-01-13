@@ -632,6 +632,7 @@ const App: React.FC = () => {
           isPlayer2Connected={isPlayer2Connected}
           onInvite={handleInvite}
           onPlayer2Join={handlePlayer2Join}
+          gameMode={selectedGameMode}
         />
       )}
 

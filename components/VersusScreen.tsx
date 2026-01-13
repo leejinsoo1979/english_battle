@@ -507,8 +507,7 @@ interface Props {
   onInvite?: () => void;
   onPlayer2Join?: () => void;
   inviteLink?: string;
-  gameType?: VersusGameType;
-  onGameTypeChange?: (type: VersusGameType) => void;
+  gameMode?: VersusGameType | 'random';
 }
 
 // 에너지 게이지 컴포넌트 (다크 스타일)
@@ -932,8 +931,7 @@ const VersusScreen: React.FC<Props> = ({
   onInvite,
   onPlayer2Join,
   inviteLink,
-  gameType = 'fill-blank',
-  onGameTypeChange,
+  gameMode = 'random',
 }) => {
   const [player1Input, setPlayer1Input] = useState('');
   const [player2Input, setPlayer2Input] = useState('');
@@ -943,23 +941,29 @@ const VersusScreen: React.FC<Props> = ({
   const [screenShake, setScreenShake] = useState(false);
   const [showRoundStart, setShowRoundStart] = useState(true);
   const [lightningTarget, setLightningTarget] = useState<'left' | 'right' | null>(null);
-  const [showGameSelector, setShowGameSelector] = useState(false);
-  const [currentGameType, setCurrentGameType] = useState<VersusGameType>(gameType);
+  const [currentGameType, setCurrentGameType] = useState<VersusGameType>(() => {
+    // 초기 게임 타입 설정
+    if (gameMode === 'random') {
+      return GAME_TYPES[Math.floor(Math.random() * GAME_TYPES.length)].type;
+    }
+    return gameMode;
+  });
   const player1InputRef = useRef<HTMLInputElement>(null);
   const player2InputRef = useRef<HTMLInputElement>(null);
   const prevRoundRef = useRef(currentRound);
 
-  // 라운드마다 게임 타입 랜덤 선택
+  // 라운드마다 게임 타입 선택 (랜덤 모드일 때만 변경)
   useEffect(() => {
     if (prevRoundRef.current !== currentRound) {
-      // 랜덤 게임 타입 선택
-      const randomType = GAME_TYPES[Math.floor(Math.random() * GAME_TYPES.length)].type;
-      setCurrentGameType(randomType);
-      if (onGameTypeChange) {
-        onGameTypeChange(randomType);
+      if (gameMode === 'random') {
+        // 랜덤 모드: 매 라운드 다른 게임 타입
+        const randomType = GAME_TYPES[Math.floor(Math.random() * GAME_TYPES.length)].type;
+        setCurrentGameType(randomType);
       }
+      // 고정 모드: 선택한 게임 타입 유지 (변경 없음)
+      prevRoundRef.current = currentRound;
     }
-  }, [currentRound, onGameTypeChange]);
+  }, [currentRound, gameMode]);
 
   // 라운드 변경 시 라운드 시작 효과 표시
   useEffect(() => {

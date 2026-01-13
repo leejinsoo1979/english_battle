@@ -41,19 +41,13 @@ export async function generateQuizWithAI(): Promise<QuizLevel | null> {
 
   const randomRule = PHONICS_RULES[Math.floor(Math.random() * PHONICS_RULES.length)];
 
-  const prompt = `Generate a phonics quiz for children learning English.
-Use the phonics rule: "${randomRule.name}" - ${randomRule.description}
-Examples: ${randomRule.examples}
+  const prompt = `Generate a simple phonics word for kids.
+Phonics rule: ${randomRule.name}
 
-Return ONLY a valid JSON object (no markdown, no code blocks) with this exact structure:
-{
-  "targetWord": "a simple 3-6 letter word following the phonics rule",
-  "sentence": "A simple sentence using the word, with ____ as placeholder for the word",
-  "distractors": ["2-3 random letters not in the target word"]
-}
+Reply with ONLY this JSON (nothing else):
+{"word":"cat","sentence":"The ____ is cute.","extra":["x","z"]}
 
-Example response:
-{"targetWord": "cat", "sentence": "The ____ is sleeping.", "distractors": ["x", "z"]}`;
+Use a real 3-5 letter English word that follows the phonics rule. Replace "cat" with your word.`;
 
   try {
     const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
@@ -85,11 +79,33 @@ Example response:
 
     // Parse JSON from response (handle potential markdown code blocks)
     let jsonStr = textResponse.trim();
-    if (jsonStr.startsWith('```')) {
+
+    // Remove markdown code blocks if present
+    if (jsonStr.includes('```')) {
       jsonStr = jsonStr.replace(/```json?\n?/g, '').replace(/```/g, '');
     }
 
-    const generated: GeneratedQuiz = JSON.parse(jsonStr);
+    // Extract JSON object from response
+    const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('No valid JSON found in response');
+    }
+    jsonStr = jsonMatch[0];
+
+    const parsed = JSON.parse(jsonStr);
+
+    // Map to our expected structure (handle different key names)
+    const generated: GeneratedQuiz = {
+      targetWord: parsed.word || parsed.targetWord,
+      sentence: parsed.sentence,
+      distractors: parsed.extra || parsed.distractors || ['x', 'z'],
+      phonicsRule: {
+        name: randomRule.name,
+        description: randomRule.description,
+        indices: [],
+        color: getRandomColor()
+      }
+    };
 
     // Generate image URL using Unsplash (free, real photos)
     const searchQuery = encodeURIComponent(generated.targetWord);
