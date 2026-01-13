@@ -18,7 +18,7 @@ interface Props {
   inviteLink?: string;
 }
 
-// 에너지 게이지 컴포넌트
+// 에너지 게이지 컴포넌트 (라이트 스타일)
 const HealthBar: React.FC<{
   health: number;
   maxHealth: number;
@@ -27,38 +27,53 @@ const HealthBar: React.FC<{
   showDamage: boolean;
 }> = ({ health, maxHealth, isLeft, playerName, showDamage }) => {
   const percentage = (health / maxHealth) * 100;
-  const barColor = percentage > 50 ? 'bg-green-500' : percentage > 25 ? 'bg-yellow-500' : 'bg-red-500';
+
+  // 라이트 스타일 색상
+  const getBarGradient = () => {
+    if (percentage > 50) {
+      return isLeft
+        ? 'linear-gradient(90deg, #3b82f6, #60a5fa, #93c5fd)'
+        : 'linear-gradient(270deg, #ef4444, #f87171, #fca5a5)';
+    } else if (percentage > 25) {
+      return 'linear-gradient(90deg, #f59e0b, #fbbf24, #fcd34d)';
+    }
+    return 'linear-gradient(90deg, #ef4444, #f87171, #fca5a5)';
+  };
 
   return (
-    <div className={`flex-1 ${isLeft ? 'pr-4' : 'pl-4'}`}>
-      <div className={`flex items-center gap-2 mb-1 ${isLeft ? '' : 'flex-row-reverse'}`}>
-        <span className={`font-bold text-lg ${isLeft ? 'text-blue-600' : 'text-red-600'}`}>
+    <div className={`flex-1 ${isLeft ? 'pr-3' : 'pl-3'}`}>
+      <div className={`flex items-center gap-2 mb-1.5 ${isLeft ? '' : 'flex-row-reverse'}`}>
+        <span className={`font-bold text-sm ${isLeft ? 'text-blue-600' : 'text-red-600'}`}>
           {playerName}
         </span>
-        <span className="text-sm text-gray-500">{health}/{maxHealth}</span>
+        <span className="text-xs text-gray-400 tabular-nums">{health}</span>
       </div>
-      <div className={`relative h-8 bg-gray-700 rounded-lg overflow-hidden border-2 ${isLeft ? 'border-blue-400' : 'border-red-400'}`}>
+      <div className={`relative h-6 bg-gray-100 rounded-full overflow-hidden border ${isLeft ? 'border-blue-200' : 'border-red-200'}`}>
         {/* 배경 패턴 */}
-        <div className="absolute inset-0 opacity-20">
+        <div className="absolute inset-0 opacity-30">
           {[...Array(10)].map((_, i) => (
             <div
               key={i}
-              className="absolute top-0 bottom-0 w-px bg-black"
+              className="absolute top-0 bottom-0 w-px bg-gray-300"
               style={{ left: `${(i + 1) * 10}%` }}
             />
           ))}
         </div>
         {/* 체력바 */}
         <div
-          className={`absolute top-0 bottom-0 ${barColor} transition-all duration-500 ${isLeft ? 'left-0' : 'right-0'}`}
-          style={{ width: `${percentage}%` }}
+          className={`absolute top-0 bottom-0 transition-all duration-500 rounded-full ${isLeft ? 'left-0' : 'right-0'}`}
+          style={{
+            width: `${percentage}%`,
+            background: getBarGradient(),
+            boxShadow: percentage <= 25 ? '0 0 10px rgba(239, 68, 68, 0.5)' : 'none',
+          }}
         >
           {/* 광택 효과 */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-transparent to-black/10 rounded-full" />
         </div>
         {/* 데미지 효과 */}
         {showDamage && (
-          <div className={`absolute inset-0 bg-white animate-pulse`} />
+          <div className="absolute inset-0 bg-white/80 animate-pulse rounded-full" />
         )}
       </div>
     </div>
@@ -517,17 +532,46 @@ const VersusScreen: React.FC<Props> = ({
         />
       )}
 
-      {/* 스트리트 파이터 스타일 상단 HUD */}
-      <div className="bg-gradient-to-b from-gray-900 to-gray-800 px-4 py-3 shadow-lg">
-        {/* 라운드 표시 */}
-        <div className="text-center mb-2">
-          <span className="text-yellow-400 font-bold text-sm tracking-wider">
-            ROUND {currentRound} / {totalRounds}
+      {/* 상단 HUD (라이트 스타일) */}
+      <div className="bg-white/80 backdrop-blur-sm px-4 py-3 shadow-sm border-b border-gray-100">
+        {/* 라운드 & 승리 표시 */}
+        <div className="flex items-center justify-between mb-2">
+          {/* Player 1 승리 표시 */}
+          <div className="flex items-center gap-1.5">
+            {[...Array(Math.ceil(totalRounds / 2))].map((_, i) => (
+              <div
+                key={i}
+                className={`w-3 h-3 rounded-full border-2 transition-all ${
+                  players[0].score > i
+                    ? 'bg-blue-500 border-blue-500 shadow-sm shadow-blue-200'
+                    : 'border-gray-300 bg-white'
+                }`}
+              />
+            ))}
+          </div>
+
+          {/* 라운드 표시 */}
+          <span className="text-orange-500 font-bold text-sm tracking-widest uppercase">
+            Round {currentRound}
           </span>
+
+          {/* Player 2 승리 표시 */}
+          <div className="flex items-center gap-1.5">
+            {[...Array(Math.ceil(totalRounds / 2))].map((_, i) => (
+              <div
+                key={i}
+                className={`w-3 h-3 rounded-full border-2 transition-all ${
+                  players[1].score > i
+                    ? 'bg-red-500 border-red-500 shadow-sm shadow-red-200'
+                    : 'border-gray-300 bg-white'
+                }`}
+              />
+            ))}
+          </div>
         </div>
 
         {/* 에너지 게이지 바 */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <HealthBar
             health={players[0].health}
             maxHealth={100}
@@ -535,8 +579,8 @@ const VersusScreen: React.FC<Props> = ({
             playerName={players[0].name}
             showDamage={showDamage === 1}
           />
-          <div className="flex-shrink-0">
-            <span className="text-3xl font-fredoka text-yellow-400 drop-shadow-lg">VS</span>
+          <div className="flex-shrink-0 px-2">
+            <span className="text-2xl font-fredoka text-orange-500">VS</span>
           </div>
           <HealthBar
             health={players[1].health}
@@ -545,18 +589,6 @@ const VersusScreen: React.FC<Props> = ({
             playerName={players[1].name}
             showDamage={showDamage === 2}
           />
-        </div>
-
-        {/* 점수 표시 */}
-        <div className="flex justify-between mt-2 px-2">
-          <div className="flex items-center gap-2">
-            <span className="text-yellow-400 text-sm">WINS:</span>
-            <span className="text-white font-bold">{players[0].score}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-white font-bold">{players[1].score}</span>
-            <span className="text-yellow-400 text-sm">:WINS</span>
-          </div>
         </div>
       </div>
 
