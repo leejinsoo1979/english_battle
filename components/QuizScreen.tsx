@@ -166,14 +166,14 @@ const QuizScreen: React.FC<Props> = ({ level, onComplete }) => {
               <img
                 src={level.imageHint}
                 alt="Hint"
-                className={`w-40 h-40 md:w-52 md:h-52 object-cover rounded-2xl border-4 ${isWordCorrect ? 'border-teal-400' : 'border-orange-200'} shadow-xl transition-all`}
+                className={`w-56 h-56 md:w-72 md:h-72 object-cover rounded-2xl border-4 ${isWordCorrect ? 'border-teal-400' : 'border-orange-200'} shadow-xl transition-all`}
               />
             </motion.div>
             <button
               onClick={() => { playSound('pop'); speak(level.targetWord); }}
-              className="absolute -bottom-3 -right-3 bg-orange-400 hover:bg-orange-500 text-white w-12 h-12 rounded-xl shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-90"
+              className="absolute -bottom-3 -right-3 bg-orange-400 hover:bg-orange-500 text-white w-14 h-14 rounded-xl shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-90"
             >
-              <i className="fa-solid fa-volume-high text-lg"></i>
+              <i className="fa-solid fa-volume-high text-xl"></i>
             </button>
           </div>
 
