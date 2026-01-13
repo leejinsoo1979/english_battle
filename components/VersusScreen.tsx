@@ -18,7 +18,7 @@ interface Props {
   inviteLink?: string;
 }
 
-// 에너지 게이지 컴포넌트 (라이트 스타일)
+// 에너지 게이지 컴포넌트 (다크 스타일)
 const HealthBar: React.FC<{
   health: number;
   maxHealth: number;
@@ -28,33 +28,33 @@ const HealthBar: React.FC<{
 }> = ({ health, maxHealth, isLeft, playerName, showDamage }) => {
   const percentage = (health / maxHealth) * 100;
 
-  // 라이트 스타일 색상
+  // 다크 스타일 색상
   const getBarGradient = () => {
     if (percentage > 50) {
       return isLeft
-        ? 'linear-gradient(90deg, #3b82f6, #60a5fa, #93c5fd)'
-        : 'linear-gradient(270deg, #ef4444, #f87171, #fca5a5)';
+        ? 'linear-gradient(90deg, #2563eb, #3b82f6, #60a5fa)'
+        : 'linear-gradient(270deg, #dc2626, #ef4444, #f87171)';
     } else if (percentage > 25) {
-      return 'linear-gradient(90deg, #f59e0b, #fbbf24, #fcd34d)';
+      return 'linear-gradient(90deg, #d97706, #f59e0b, #fbbf24)';
     }
-    return 'linear-gradient(90deg, #ef4444, #f87171, #fca5a5)';
+    return 'linear-gradient(90deg, #dc2626, #ef4444, #f87171)';
   };
 
   return (
     <div className={`flex-1 ${isLeft ? 'pr-3' : 'pl-3'}`}>
       <div className={`flex items-center gap-2 mb-1.5 ${isLeft ? '' : 'flex-row-reverse'}`}>
-        <span className={`font-bold text-sm ${isLeft ? 'text-blue-600' : 'text-red-600'}`}>
+        <span className={`font-bold text-sm ${isLeft ? 'text-blue-400' : 'text-red-400'}`}>
           {playerName}
         </span>
         <span className="text-xs text-gray-400 tabular-nums">{health}</span>
       </div>
-      <div className={`relative h-6 bg-gray-100 rounded-full overflow-hidden border ${isLeft ? 'border-blue-200' : 'border-red-200'}`}>
+      <div className={`relative h-6 bg-gray-800 rounded-full overflow-hidden border ${isLeft ? 'border-blue-600' : 'border-red-600'}`}>
         {/* 배경 패턴 */}
         <div className="absolute inset-0 opacity-30">
           {[...Array(10)].map((_, i) => (
             <div
               key={i}
-              className="absolute top-0 bottom-0 w-px bg-gray-300"
+              className="absolute top-0 bottom-0 w-px bg-gray-600"
               style={{ left: `${(i + 1) * 10}%` }}
             />
           ))}
@@ -65,15 +65,15 @@ const HealthBar: React.FC<{
           style={{
             width: `${percentage}%`,
             background: getBarGradient(),
-            boxShadow: percentage <= 25 ? '0 0 10px rgba(239, 68, 68, 0.5)' : 'none',
+            boxShadow: percentage <= 25 ? '0 0 15px rgba(239, 68, 68, 0.7)' : `0 0 10px ${isLeft ? 'rgba(59, 130, 246, 0.5)' : 'rgba(239, 68, 68, 0.5)'}`,
           }}
         >
           {/* 광택 효과 */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-transparent to-black/10 rounded-full" />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-black/20 rounded-full" />
         </div>
         {/* 데미지 효과 */}
         {showDamage && (
-          <div className="absolute inset-0 bg-white/80 animate-pulse rounded-full" />
+          <div className="absolute inset-0 bg-red-500/50 animate-pulse rounded-full" />
         )}
       </div>
     </div>
@@ -523,7 +523,7 @@ const VersusScreen: React.FC<Props> = ({
   }, [showResult]);
 
   return (
-    <div className={`h-full w-full flex flex-col relative ${screenShake ? 'screen-shake' : ''}`} style={{ backgroundColor: '#fef8ed' }}>
+    <div className={`h-full w-full flex flex-col relative ${screenShake ? 'screen-shake' : ''}`} style={{ backgroundColor: '#0f0f1a' }}>
       {/* 공격 이펙트 */}
       {attackEffect && (
         <AttackEffect
@@ -532,8 +532,8 @@ const VersusScreen: React.FC<Props> = ({
         />
       )}
 
-      {/* 상단 HUD (라이트 스타일) */}
-      <div className="bg-white/80 backdrop-blur-sm px-4 py-3 shadow-sm border-b border-gray-100">
+      {/* 상단 HUD (다크 스타일) */}
+      <div className="bg-gradient-to-b from-gray-900/95 to-gray-800/90 backdrop-blur-sm px-4 py-3 border-b border-gray-700">
         {/* 라운드 & 승리 표시 */}
         <div className="flex items-center justify-between mb-2">
           {/* Player 1 승리 표시 */}
