@@ -1,7 +1,184 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { QuizLevel, Player } from '../types';
 import robotImage from './images/robot.png';
+
+// 우주 배경 컴포넌트
+const SpaceBackground: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // 별들 생성 (메모이제이션)
+  const stars = useMemo(() => {
+    return Array.from({ length: 200 }, () => ({
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: Math.random() * 2 + 0.5,
+      opacity: Math.random() * 0.8 + 0.2,
+      twinkleSpeed: Math.random() * 2 + 1,
+      twinkleOffset: Math.random() * Math.PI * 2,
+    }));
+  }, []);
+
+  // 성운 효과
+  const nebulae = useMemo(() => [
+    { x: 20, y: 30, color: 'rgba(59, 130, 246, 0.15)', size: 300 },
+    { x: 80, y: 70, color: 'rgba(239, 68, 68, 0.12)', size: 350 },
+    { x: 50, y: 50, color: 'rgba(168, 85, 247, 0.08)', size: 400 },
+  ], []);
+
+  // 유성 효과
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    interface ShootingStar {
+      x: number;
+      y: number;
+      length: number;
+      speed: number;
+      opacity: number;
+      angle: number;
+    }
+
+    const shootingStars: ShootingStar[] = [];
+
+    const createShootingStar = () => {
+      if (Math.random() < 0.02 && shootingStars.length < 3) {
+        shootingStars.push({
+          x: Math.random() * canvas.width,
+          y: 0,
+          length: Math.random() * 80 + 50,
+          speed: Math.random() * 10 + 8,
+          opacity: 1,
+          angle: Math.PI / 4 + (Math.random() - 0.5) * 0.3,
+        });
+      }
+    };
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 유성 그리기
+      for (let i = shootingStars.length - 1; i >= 0; i--) {
+        const star = shootingStars[i];
+
+        const gradient = ctx.createLinearGradient(
+          star.x, star.y,
+          star.x - Math.cos(star.angle) * star.length,
+          star.y - Math.sin(star.angle) * star.length
+        );
+        gradient.addColorStop(0, `rgba(255, 255, 255, ${star.opacity})`);
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+        ctx.beginPath();
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 2;
+        ctx.moveTo(star.x, star.y);
+        ctx.lineTo(
+          star.x - Math.cos(star.angle) * star.length,
+          star.y - Math.sin(star.angle) * star.length
+        );
+        ctx.stroke();
+
+        // 유성 머리 부분 글로우
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+        ctx.fill();
+
+        star.x += Math.cos(star.angle) * star.speed;
+        star.y += Math.sin(star.angle) * star.speed;
+        star.opacity -= 0.015;
+
+        if (star.opacity <= 0 || star.y > canvas.height) {
+          shootingStars.splice(i, 1);
+        }
+      }
+
+      createShootingStar();
+      requestAnimationFrame(animate);
+    };
+
+    const animationId = requestAnimationFrame(animate);
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* 기본 우주 배경 그라데이션 */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: 'radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0f0f1a 50%, #050510 100%)',
+        }}
+      />
+
+      {/* 성운 효과 */}
+      {nebulae.map((nebula, i) => (
+        <div
+          key={i}
+          className="absolute rounded-full blur-3xl animate-pulse"
+          style={{
+            left: `${nebula.x}%`,
+            top: `${nebula.y}%`,
+            width: nebula.size,
+            height: nebula.size,
+            background: nebula.color,
+            transform: 'translate(-50%, -50%)',
+            animation: `pulse ${8 + i * 2}s ease-in-out infinite`,
+          }}
+        />
+      ))}
+
+      {/* CSS 별들 (반짝임 효과) */}
+      {stars.map((star, i) => (
+        <div
+          key={i}
+          className="absolute rounded-full"
+          style={{
+            left: `${star.x}%`,
+            top: `${star.y}%`,
+            width: star.size,
+            height: star.size,
+            backgroundColor: 'white',
+            opacity: star.opacity,
+            animation: `twinkle ${star.twinkleSpeed}s ease-in-out infinite`,
+            animationDelay: `${star.twinkleOffset}s`,
+            boxShadow: star.size > 1.5 ? '0 0 4px rgba(255, 255, 255, 0.5)' : 'none',
+          }}
+        />
+      ))}
+
+      {/* 유성 캔버스 */}
+      <canvas ref={canvasRef} className="absolute inset-0" />
+
+      {/* 반짝임 애니메이션 */}
+      <style>{`
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.3; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.2); }
+        }
+      `}</style>
+    </div>
+  );
+};
 
 interface Props {
   level: QuizLevel;
@@ -523,7 +700,10 @@ const VersusScreen: React.FC<Props> = ({
   }, [showResult]);
 
   return (
-    <div className={`h-full w-full flex flex-col relative ${screenShake ? 'screen-shake' : ''}`} style={{ backgroundColor: '#0f0f1a' }}>
+    <div className={`h-full w-full flex flex-col relative ${screenShake ? 'screen-shake' : ''}`} style={{ backgroundColor: '#050510' }}>
+      {/* 우주 배경 */}
+      <SpaceBackground />
+
       {/* 공격 이펙트 */}
       {attackEffect && (
         <AttackEffect
@@ -533,7 +713,7 @@ const VersusScreen: React.FC<Props> = ({
       )}
 
       {/* 상단 HUD (다크 스타일) */}
-      <div className="bg-gradient-to-b from-gray-900/95 to-gray-800/90 backdrop-blur-sm px-4 py-3 border-b border-gray-700">
+      <div className="relative z-10 px-4 py-3 border-b border-gray-800/50 bg-black/30 backdrop-blur-sm">
         {/* 라운드 & 승리 표시 */}
         <div className="flex items-center justify-between mb-2">
           {/* Player 1 승리 표시 */}
@@ -543,15 +723,15 @@ const VersusScreen: React.FC<Props> = ({
                 key={i}
                 className={`w-3 h-3 rounded-full border-2 transition-all ${
                   players[0].score > i
-                    ? 'bg-blue-500 border-blue-500 shadow-sm shadow-blue-200'
-                    : 'border-gray-300 bg-white'
+                    ? 'bg-blue-500 border-blue-500 shadow-md shadow-blue-500/50'
+                    : 'border-gray-600 bg-gray-800'
                 }`}
               />
             ))}
           </div>
 
           {/* 라운드 표시 */}
-          <span className="text-orange-500 font-bold text-sm tracking-widest uppercase">
+          <span className="text-yellow-400 font-bold text-sm tracking-widest uppercase drop-shadow-lg">
             Round {currentRound}
           </span>
 
@@ -562,8 +742,8 @@ const VersusScreen: React.FC<Props> = ({
                 key={i}
                 className={`w-3 h-3 rounded-full border-2 transition-all ${
                   players[1].score > i
-                    ? 'bg-red-500 border-red-500 shadow-sm shadow-red-200'
-                    : 'border-gray-300 bg-white'
+                    ? 'bg-red-500 border-red-500 shadow-md shadow-red-500/50'
+                    : 'border-gray-600 bg-gray-800'
                 }`}
               />
             ))}
@@ -580,7 +760,7 @@ const VersusScreen: React.FC<Props> = ({
             showDamage={showDamage === 1}
           />
           <div className="flex-shrink-0 px-2">
-            <span className="text-2xl font-fredoka text-orange-500">VS</span>
+            <span className="text-2xl font-fredoka text-yellow-400 drop-shadow-lg">VS</span>
           </div>
           <HealthBar
             health={players[1].health}
@@ -593,20 +773,20 @@ const VersusScreen: React.FC<Props> = ({
       </div>
 
       {/* Main Content - 3 Columns */}
-      <div className="flex-1 flex">
+      <div className="relative z-10 flex-1 flex">
         {/* Player 1 Area (Left) */}
-        <div className="flex-1 flex flex-col items-center justify-center p-4 bg-blue-50/50">
+        <div className="flex-1 flex flex-col items-center justify-center p-4 bg-transparent">
           {/* Player 1 Character */}
           <div className="mb-4">
             <img
               src={robotImage}
               alt="Player 1"
-              className="w-36 h-36 md:w-48 md:h-48 object-contain"
-              style={{ filter: 'hue-rotate(200deg)' }}
+              className="w-36 h-36 md:w-48 md:h-48 object-contain drop-shadow-lg"
+              style={{ filter: 'hue-rotate(200deg) drop-shadow(0 0 20px rgba(59, 130, 246, 0.5))' }}
             />
           </div>
           <div className="text-center mb-2">
-            <span className="text-sm text-gray-500">Q키를 눌러 입력</span>
+            <span className="text-sm text-blue-300">Q키를 눌러 입력</span>
           </div>
           <form onSubmit={handlePlayer1Submit} className="w-full max-w-xs">
             <input
@@ -616,28 +796,28 @@ const VersusScreen: React.FC<Props> = ({
               onChange={(e) => setPlayer1Input(e.target.value)}
               placeholder="단어를 입력하세요"
               disabled={showResult}
-              className="w-full px-4 py-3 text-xl text-center border-2 border-blue-300 rounded-xl focus:border-blue-500 focus:outline-none disabled:bg-gray-100"
+              className="w-full px-4 py-3 text-xl text-center border-2 border-blue-500 rounded-xl focus:border-blue-400 focus:outline-none disabled:bg-gray-700 bg-gray-800 text-white placeholder-gray-500"
               autoComplete="off"
             />
             <button
               type="submit"
               disabled={showResult || !player1Input.trim()}
-              className="w-full mt-3 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-xl font-semibold transition-colors"
+              className="w-full mt-3 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white rounded-xl font-semibold transition-colors shadow-lg shadow-blue-500/30"
             >
               제출 (Enter)
             </button>
           </form>
           {showResult && players[0].isCorrect !== null && (
-            <div className={`mt-3 text-2xl font-bold ${players[0].isCorrect ? 'text-green-500' : 'text-red-500'}`}>
+            <div className={`mt-3 text-2xl font-bold ${players[0].isCorrect ? 'text-green-400' : 'text-red-400'}`}>
               {players[0].isCorrect ? '정답! ✓' : '오답 ✗'}
             </div>
           )}
         </div>
 
         {/* Center Area - Image & Word */}
-        <div className="flex-1 flex flex-col items-center justify-center p-6 border-x-2 border-gray-200">
+        <div className="flex-1 flex flex-col items-center justify-center p-6 border-x border-gray-700/30 bg-black/20 backdrop-blur-sm">
           {/* Image */}
-          <div className="w-48 h-48 md:w-64 md:h-64 rounded-2xl overflow-hidden shadow-lg mb-6 bg-white">
+          <div className="w-48 h-48 md:w-64 md:h-64 rounded-2xl overflow-hidden shadow-2xl mb-6 ring-4 ring-yellow-500/30">
             <img
               src={level.imageHint}
               alt="hint"
@@ -647,26 +827,26 @@ const VersusScreen: React.FC<Props> = ({
 
           {/* Word Display */}
           <div className="text-center">
-            <p className="text-xl text-gray-600 mb-2">{level.sentence}</p>
+            <p className="text-xl text-gray-300 mb-2">{level.sentence}</p>
             <div className="flex justify-center gap-2">
               {level.targetWord.split('').map((_, index) => (
                 <div
                   key={index}
-                  className="w-10 h-12 border-b-4 border-gray-400 flex items-center justify-center"
+                  className="w-10 h-12 border-b-4 border-yellow-500 flex items-center justify-center"
                 >
-                  <span className="text-2xl text-gray-300">_</span>
+                  <span className="text-2xl text-gray-500">_</span>
                 </div>
               ))}
             </div>
-            <p className="mt-4 text-gray-400 text-sm">
+            <p className="mt-4 text-gray-500 text-sm">
               {level.targetWord.length}글자
             </p>
           </div>
 
           {/* Round Winner Display */}
           {showResult && roundWinner && (
-            <div className="mt-6 p-4 bg-yellow-100 rounded-xl">
-              <span className="text-xl font-bold text-yellow-700">
+            <div className="mt-6 p-4 bg-yellow-500/20 border border-yellow-500/50 rounded-xl">
+              <span className="text-xl font-bold text-yellow-400">
                 🎉 {roundWinner === 1 ? players[0].name : players[1].name} 승리!
               </span>
             </div>
@@ -674,19 +854,19 @@ const VersusScreen: React.FC<Props> = ({
         </div>
 
         {/* Player 2 Area (Right) */}
-        <div className="flex-1 flex flex-col items-center justify-center p-4 bg-red-50/50">
+        <div className="flex-1 flex flex-col items-center justify-center p-4 bg-transparent">
           {!isPlayer2Connected ? (
             /* 초대 대기 화면 */
             <div className="flex flex-col items-center justify-center text-center">
-              <div className="w-36 h-36 md:w-48 md:h-48 rounded-full bg-gray-200 flex items-center justify-center mb-4 border-4 border-dashed border-gray-400">
-                <i className="fa-solid fa-user-plus text-4xl md:text-5xl text-gray-400"></i>
+              <div className="w-36 h-36 md:w-48 md:h-48 rounded-full bg-gray-800 flex items-center justify-center mb-4 border-4 border-dashed border-gray-600">
+                <i className="fa-solid fa-user-plus text-4xl md:text-5xl text-gray-500"></i>
               </div>
-              <p className="text-gray-500 mb-6 text-lg">Player 2 참가 대기중</p>
+              <p className="text-gray-400 mb-6 text-lg">Player 2 참가 대기중</p>
 
               {/* 온라인 초대 버튼 */}
               <button
                 onClick={onInvite}
-                className="w-full max-w-xs px-6 py-4 bg-teal-500 hover:bg-teal-600 text-white rounded-xl font-semibold transition-colors shadow-lg flex items-center justify-center gap-2"
+                className="w-full max-w-xs px-6 py-4 bg-teal-600 hover:bg-teal-500 text-white rounded-xl font-semibold transition-colors shadow-lg shadow-teal-500/30 flex items-center justify-center gap-2"
               >
                 <i className="fa-solid fa-share-nodes"></i>
                 친구 초대하기
@@ -700,12 +880,12 @@ const VersusScreen: React.FC<Props> = ({
                 <img
                   src={robotImage}
                   alt="Player 2"
-                  className="w-36 h-36 md:w-48 md:h-48 object-contain"
-                  style={{ filter: 'hue-rotate(-30deg)' }}
+                  className="w-36 h-36 md:w-48 md:h-48 object-contain drop-shadow-lg"
+                  style={{ filter: 'hue-rotate(-30deg) drop-shadow(0 0 20px rgba(239, 68, 68, 0.5))' }}
                 />
               </div>
               <div className="text-center mb-2">
-                <span className="text-sm text-gray-500">P키를 눌러 입력</span>
+                <span className="text-sm text-red-300">P키를 눌러 입력</span>
               </div>
               <form onSubmit={handlePlayer2Submit} className="w-full max-w-xs">
                 <input
@@ -715,19 +895,19 @@ const VersusScreen: React.FC<Props> = ({
                   onChange={(e) => setPlayer2Input(e.target.value)}
                   placeholder="단어를 입력하세요"
                   disabled={showResult}
-                  className="w-full px-4 py-3 text-xl text-center border-2 border-red-300 rounded-xl focus:border-red-500 focus:outline-none disabled:bg-gray-100"
+                  className="w-full px-4 py-3 text-xl text-center border-2 border-red-500 rounded-xl focus:border-red-400 focus:outline-none disabled:bg-gray-700 bg-gray-800 text-white placeholder-gray-500"
                   autoComplete="off"
                 />
                 <button
                   type="submit"
                   disabled={showResult || !player2Input.trim()}
-                  className="w-full mt-3 py-3 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 text-white rounded-xl font-semibold transition-colors"
+                  className="w-full mt-3 py-3 bg-red-600 hover:bg-red-500 disabled:bg-gray-600 text-white rounded-xl font-semibold transition-colors shadow-lg shadow-red-500/30"
                 >
                   제출 (Enter)
                 </button>
               </form>
               {showResult && players[1].isCorrect !== null && (
-                <div className={`mt-3 text-2xl font-bold ${players[1].isCorrect ? 'text-green-500' : 'text-red-500'}`}>
+                <div className={`mt-3 text-2xl font-bold ${players[1].isCorrect ? 'text-green-400' : 'text-red-400'}`}>
                   {players[1].isCorrect ? '정답! ✓' : '오답 ✗'}
                 </div>
               )}
