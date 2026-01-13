@@ -125,15 +125,18 @@ const App: React.FC = () => {
     startTimer();
   };
 
+  const [isPlayer2Connected, setIsPlayer2Connected] = useState(false);
+
   const startVersusGame = () => {
     if (levels.length === 0) {
       alert('레벨이 없습니다. 관리자 화면에서 레벨을 추가하세요!');
       return;
     }
     const initialPlayers: [Player, Player] = [
-      { id: 1, name: 'Player 1', score: 0, currentInput: '', isCorrect: null },
-      { id: 2, name: 'Player 2', score: 0, currentInput: '', isCorrect: null },
+      { id: 1, name: 'Player 1', score: 0, health: 100, currentInput: '', isCorrect: null },
+      { id: 2, name: 'Player 2', score: 0, health: 100, currentInput: '', isCorrect: null },
     ];
+    setIsPlayer2Connected(false); // 초기에는 Player 2 미연결
     setGameState({
       currentLevelIndex: 0,
       score: 0,
@@ -144,6 +147,31 @@ const App: React.FC = () => {
       winner: null,
     });
     setRoundWinner(null);
+  };
+
+  // Player 2 참가 (로컬 대전)
+  const handlePlayer2Join = () => {
+    setIsPlayer2Connected(true);
+  };
+
+  // 초대 링크 생성 및 복사
+  const handleInvite = async () => {
+    const roomId = generateRoomId();
+    const inviteUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
+
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      alert('초대 링크가 복사되었습니다!\n친구에게 공유하세요.');
+    } catch (err) {
+      // 클립보드 API 실패 시 대체 방법
+      const textArea = document.createElement('textarea');
+      textArea.value = inviteUrl;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      alert('초대 링크가 복사되었습니다!\n친구에게 공유하세요.');
+    }
   };
 
   // 온라인 방 만들기
@@ -260,8 +288,8 @@ const App: React.FC = () => {
     localStorage.setItem(`${ROOM_STORAGE_KEY}-${room.roomId}-started`, 'true');
 
     const initialPlayers: [Player, Player] = [
-      { id: 1, name: room.hostName, score: 0, currentInput: '', isCorrect: null },
-      { id: 2, name: room.guestName || 'Player 2', score: 0, currentInput: '', isCorrect: null },
+      { id: 1, name: room.hostName, score: 0, health: 100, currentInput: '', isCorrect: null },
+      { id: 2, name: room.guestName || 'Player 2', score: 0, health: 100, currentInput: '', isCorrect: null },
     ];
 
     if (pollIntervalRef.current) {
@@ -304,19 +332,55 @@ const App: React.FC = () => {
     });
   }, [levels, gameState.currentLevelIndex]);
 
+  // 체력 업데이트 핸들러
+  const handleHealthUpdate = useCallback((playerId: 1 | 2, damage: number) => {
+    setGameState(prev => {
+      if (!prev.players) return prev;
+
+      const updatedPlayers = [...prev.players] as [Player, Player];
+      const playerIndex = playerId - 1;
+      const newHealth = Math.max(0, updatedPlayers[playerIndex].health - damage);
+      updatedPlayers[playerIndex] = {
+        ...updatedPlayers[playerIndex],
+        health: newHealth,
+      };
+
+      // 체력이 0이 되면 게임 종료
+      if (newHealth <= 0) {
+        const winner = playerId === 1 ? 2 : 1;
+        return {
+          ...prev,
+          players: updatedPlayers,
+          status: 'versus-result',
+          winner,
+        };
+      }
+
+      return {
+        ...prev,
+        players: updatedPlayers,
+      };
+    });
+  }, []);
+
   const handleVersusNextLevel = useCallback(() => {
     setGameState(prev => {
       if (!prev.players) return prev;
 
+      // 체력이 0인 플레이어가 있으면 이미 게임 종료
+      if (prev.players[0].health <= 0 || prev.players[1].health <= 0) {
+        return prev;
+      }
+
       const isLastLevel = prev.currentLevelIndex === levels.length - 1;
 
       if (isLastLevel) {
-        // 게임 종료
-        const player1Score = prev.players[0].score;
-        const player2Score = prev.players[1].score;
+        // 게임 종료 - 체력이 더 많은 쪽이 승리
+        const player1Health = prev.players[0].health;
+        const player2Health = prev.players[1].health;
         let winner: 1 | 2 | 'draw';
-        if (player1Score > player2Score) winner = 1;
-        else if (player2Score > player1Score) winner = 2;
+        if (player1Health > player2Health) winner = 1;
+        else if (player2Health > player1Health) winner = 2;
         else winner = 'draw';
 
         return {
@@ -437,6 +501,10 @@ const App: React.FC = () => {
           roundWinner={roundWinner}
           currentRound={gameState.currentLevelIndex + 1}
           totalRounds={levels.length}
+          onHealthUpdate={handleHealthUpdate}
+          isPlayer2Connected={isPlayer2Connected}
+          onInvite={handleInvite}
+          onPlayer2Join={handlePlayer2Join}
         />
       )}
 

@@ -9,7 +9,7 @@ interface Props {
   onAdmin: () => void;
 }
 
-const IntroScreen: React.FC<Props> = ({ onStart, onVersus, onAdmin }) => {
+const IntroScreen: React.FC<Props> = ({ onStart, onVersus, onCreateRoom, onAdmin }) => {
   return (
     <div className="h-full w-full relative overflow-hidden" style={{ backgroundColor: '#fef8ed' }}>
       {/* Admin Button */}
@@ -60,6 +60,13 @@ const IntroScreen: React.FC<Props> = ({ onStart, onVersus, onAdmin }) => {
           >
             <span>1 vs 1 대전</span>
             <i className="fa-solid fa-users"></i>
+          </button>
+          <button
+            onClick={onCreateRoom}
+            className="px-8 py-4 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold text-lg transition-colors shadow-lg flex items-center justify-center gap-2"
+          >
+            <span>친구 초대하기</span>
+            <i className="fa-solid fa-link"></i>
           </button>
         </div>
       </div>

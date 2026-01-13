@@ -11,7 +11,405 @@ interface Props {
   roundWinner: 1 | 2 | null;
   currentRound: number;
   totalRounds: number;
+  onHealthUpdate?: (playerId: 1 | 2, damage: number) => void;
+  isPlayer2Connected?: boolean;
+  onInvite?: () => void;
+  onPlayer2Join?: () => void;
+  inviteLink?: string;
 }
+
+// 에너지 게이지 컴포넌트
+const HealthBar: React.FC<{
+  health: number;
+  maxHealth: number;
+  isLeft: boolean;
+  playerName: string;
+  showDamage: boolean;
+}> = ({ health, maxHealth, isLeft, playerName, showDamage }) => {
+  const percentage = (health / maxHealth) * 100;
+  const barColor = percentage > 50 ? 'bg-green-500' : percentage > 25 ? 'bg-yellow-500' : 'bg-red-500';
+
+  return (
+    <div className={`flex-1 ${isLeft ? 'pr-4' : 'pl-4'}`}>
+      <div className={`flex items-center gap-2 mb-1 ${isLeft ? '' : 'flex-row-reverse'}`}>
+        <span className={`font-bold text-lg ${isLeft ? 'text-blue-600' : 'text-red-600'}`}>
+          {playerName}
+        </span>
+        <span className="text-sm text-gray-500">{health}/{maxHealth}</span>
+      </div>
+      <div className={`relative h-8 bg-gray-700 rounded-lg overflow-hidden border-2 ${isLeft ? 'border-blue-400' : 'border-red-400'}`}>
+        {/* 배경 패턴 */}
+        <div className="absolute inset-0 opacity-20">
+          {[...Array(10)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute top-0 bottom-0 w-px bg-black"
+              style={{ left: `${(i + 1) * 10}%` }}
+            />
+          ))}
+        </div>
+        {/* 체력바 */}
+        <div
+          className={`absolute top-0 bottom-0 ${barColor} transition-all duration-500 ${isLeft ? 'left-0' : 'right-0'}`}
+          style={{ width: `${percentage}%` }}
+        >
+          {/* 광택 효과 */}
+          <div className="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent" />
+        </div>
+        {/* 데미지 효과 */}
+        {showDamage && (
+          <div className={`absolute inset-0 bg-white animate-pulse`} />
+        )}
+      </div>
+    </div>
+  );
+};
+
+// 스트리트 파이터 스타일 공격 이펙트 컴포넌트
+const AttackEffect: React.FC<{ direction: 'left' | 'right'; onComplete: () => void }> = ({ direction, onComplete }) => {
+  const [phase, setPhase] = useState<'charge' | 'attack' | 'impact'>('charge');
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const chargeTimer = setTimeout(() => setPhase('attack'), 200);
+    const attackTimer = setTimeout(() => setPhase('impact'), 500);
+    const completeTimer = setTimeout(onComplete, 1200);
+
+    return () => {
+      clearTimeout(chargeTimer);
+      clearTimeout(attackTimer);
+      clearTimeout(completeTimer);
+    };
+  }, [onComplete]);
+
+  // Canvas 기반 파티클 효과
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const isLeft = direction === 'left';
+    const attackerColor = isLeft ? { r: 59, g: 130, b: 246 } : { r: 239, g: 68, b: 68 };
+    const particles: Array<{
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      size: number;
+      life: number;
+      maxLife: number;
+      color: { r: number; g: number; b: number };
+    }> = [];
+
+    const impactX = isLeft ? canvas.width * 0.7 : canvas.width * 0.3;
+    const impactY = canvas.height * 0.5;
+
+    let animationId: number;
+
+    const createParticles = () => {
+      if (phase === 'impact') {
+        // 폭발 파티클
+        for (let i = 0; i < 50; i++) {
+          const angle = (Math.PI * 2 * i) / 50 + Math.random() * 0.5;
+          const speed = 5 + Math.random() * 15;
+          particles.push({
+            x: impactX,
+            y: impactY,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            size: 3 + Math.random() * 8,
+            life: 1,
+            maxLife: 1,
+            color: Math.random() > 0.5 ? attackerColor : { r: 255, g: 255, b: 255 },
+          });
+        }
+        // 스파크
+        for (let i = 0; i < 20; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          particles.push({
+            x: impactX,
+            y: impactY,
+            vx: Math.cos(angle) * (10 + Math.random() * 20),
+            vy: Math.sin(angle) * (10 + Math.random() * 20),
+            size: 2 + Math.random() * 3,
+            life: 1,
+            maxLife: 1,
+            color: { r: 255, g: 200 + Math.random() * 55, b: 50 },
+          });
+        }
+      }
+    };
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 파티클 업데이트 및 렌더링
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.3; // 중력
+        p.vx *= 0.98; // 감속
+        p.life -= 0.02;
+
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        const alpha = p.life;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${p.color.r}, ${p.color.g}, ${p.color.b}, ${alpha})`;
+        ctx.fill();
+
+        // 글로우 효과
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * p.life * 2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${p.color.r}, ${p.color.g}, ${p.color.b}, ${alpha * 0.3})`;
+        ctx.fill();
+      }
+
+      animationId = requestAnimationFrame(animate);
+    };
+
+    if (phase === 'impact') {
+      createParticles();
+    }
+    animate();
+
+    return () => cancelAnimationFrame(animationId);
+  }, [phase, direction]);
+
+  const isLeft = direction === 'left';
+  const attackerColor = isLeft ? '#3B82F6' : '#EF4444';
+  const impactX = isLeft ? '70%' : '30%';
+
+  return (
+    <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
+      <canvas ref={canvasRef} className="absolute inset-0" />
+
+      {/* 화면 흔들림 */}
+      {phase === 'impact' && (
+        <style>{`
+          @keyframes screen-shake {
+            0%, 100% { transform: translate(0, 0); }
+            10% { transform: translate(-15px, -10px); }
+            20% { transform: translate(15px, 10px); }
+            30% { transform: translate(-10px, 15px); }
+            40% { transform: translate(10px, -15px); }
+            50% { transform: translate(-15px, 5px); }
+            60% { transform: translate(15px, -5px); }
+            70% { transform: translate(-5px, 15px); }
+            80% { transform: translate(5px, -15px); }
+            90% { transform: translate(-10px, 10px); }
+          }
+        `}</style>
+      )}
+
+      {/* 차징 이펙트 */}
+      {phase === 'charge' && (
+        <div
+          className="absolute top-1/2 -translate-y-1/2"
+          style={{ left: isLeft ? '15%' : 'auto', right: isLeft ? 'auto' : '15%' }}
+        >
+          {/* 에너지 코어 */}
+          <div
+            className="w-24 h-24 rounded-full animate-pulse"
+            style={{
+              background: `radial-gradient(circle, white 0%, ${attackerColor} 50%, transparent 80%)`,
+              boxShadow: `0 0 60px ${attackerColor}, 0 0 120px ${attackerColor}`,
+              animation: 'pulse 0.2s ease-in-out infinite',
+            }}
+          />
+          {/* 회전하는 에너지 링 */}
+          {[...Array(3)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-4"
+              style={{
+                width: `${80 + i * 40}px`,
+                height: `${80 + i * 40}px`,
+                borderColor: `${attackerColor}`,
+                borderStyle: 'dashed',
+                opacity: 0.8 - i * 0.2,
+                animation: `spin ${0.3 + i * 0.1}s linear infinite ${i % 2 === 0 ? '' : 'reverse'}`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* 에너지 빔 공격 */}
+      {phase === 'attack' && (
+        <>
+          {/* 메인 빔 */}
+          <div
+            className="absolute top-1/2 -translate-y-1/2 h-16"
+            style={{
+              left: isLeft ? '15%' : 'auto',
+              right: isLeft ? 'auto' : '15%',
+              width: '55%',
+              background: `linear-gradient(${isLeft ? '90deg' : '270deg'},
+                ${attackerColor} 0%,
+                white 30%,
+                ${attackerColor} 60%,
+                transparent 100%)`,
+              boxShadow: `0 0 30px ${attackerColor}, 0 0 60px ${attackerColor}, 0 0 90px white`,
+              borderRadius: '8px',
+              animation: 'beam-extend 0.3s ease-out forwards',
+            }}
+          />
+          {/* 빔 코어 */}
+          <div
+            className="absolute top-1/2 -translate-y-1/2 h-6"
+            style={{
+              left: isLeft ? '15%' : 'auto',
+              right: isLeft ? 'auto' : '15%',
+              width: '55%',
+              background: 'white',
+              boxShadow: '0 0 20px white',
+              borderRadius: '4px',
+              animation: 'beam-extend 0.25s ease-out forwards',
+            }}
+          />
+          {/* 에너지 파동 */}
+          {[...Array(5)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute top-1/2 -translate-y-1/2 w-8 h-8 rounded-full"
+              style={{
+                left: isLeft ? `${20 + i * 12}%` : 'auto',
+                right: isLeft ? 'auto' : `${20 + i * 12}%`,
+                background: `radial-gradient(circle, white, ${attackerColor})`,
+                boxShadow: `0 0 20px ${attackerColor}`,
+                animation: `wave-pulse 0.3s ease-out ${i * 0.05}s forwards`,
+                opacity: 1 - i * 0.15,
+              }}
+            />
+          ))}
+        </>
+      )}
+
+      {/* 임팩트 이펙트 */}
+      {phase === 'impact' && (
+        <>
+          {/* 화면 플래시 */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: 'white',
+              animation: 'flash 0.15s ease-out forwards',
+            }}
+          />
+
+          {/* 폭발 코어 */}
+          <div
+            className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2"
+            style={{ left: impactX }}
+          >
+            <div
+              className="w-40 h-40 rounded-full"
+              style={{
+                background: `radial-gradient(circle, white 0%, ${attackerColor} 30%, orange 60%, transparent 80%)`,
+                boxShadow: `0 0 80px ${attackerColor}, 0 0 150px orange, 0 0 200px white`,
+                animation: 'explosion 0.4s ease-out forwards',
+              }}
+            />
+
+            {/* 충격파 링 */}
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
+                style={{
+                  width: '30px',
+                  height: '30px',
+                  border: `${4 - i * 0.5}px solid ${i % 2 === 0 ? 'white' : attackerColor}`,
+                  animation: `shockwave-ring 0.6s ease-out ${i * 0.1}s forwards`,
+                }}
+              />
+            ))}
+
+            {/* 방사형 라이트 빔 */}
+            {[...Array(16)].map((_, i) => {
+              const angle = (360 / 16) * i;
+              return (
+                <div
+                  key={i}
+                  className="absolute"
+                  style={{
+                    width: '4px',
+                    height: '150px',
+                    background: `linear-gradient(to top, ${attackerColor}, white, transparent)`,
+                    top: '50%',
+                    left: '50%',
+                    transformOrigin: 'center top',
+                    transform: `translate(-50%, 0) rotate(${angle}deg)`,
+                    animation: `light-beam 0.5s ease-out ${i * 0.02}s forwards`,
+                    boxShadow: `0 0 10px ${attackerColor}`,
+                  }}
+                />
+              );
+            })}
+          </div>
+
+          {/* HIT 텍스트 */}
+          <div
+            className="absolute top-1/4 -translate-x-1/2 font-fredoka text-7xl"
+            style={{
+              left: impactX,
+              color: 'white',
+              textShadow: `
+                4px 4px 0 ${attackerColor},
+                -4px -4px 0 ${attackerColor},
+                4px -4px 0 ${attackerColor},
+                -4px 4px 0 ${attackerColor},
+                0 0 40px ${attackerColor},
+                0 0 80px white
+              `,
+              animation: 'hit-pop 0.4s ease-out forwards',
+            }}
+          >
+            HIT!
+          </div>
+
+          {/* 데미지 오버레이 */}
+          <div
+            className="absolute top-0 bottom-0 w-2/5"
+            style={{
+              left: isLeft ? 'auto' : 0,
+              right: isLeft ? 0 : 'auto',
+              background: `linear-gradient(${isLeft ? '270deg' : '90deg'},
+                rgba(255, 0, 0, 0.5) 0%,
+                rgba(255, 100, 0, 0.3) 50%,
+                transparent 100%)`,
+              animation: 'damage-flash 0.1s ease-out 3',
+            }}
+          />
+        </>
+      )}
+
+      <style>{`
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+        @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+        @keyframes beam-extend { from { transform: scaleX(0) translateY(-50%); opacity: 0; } to { transform: scaleX(1) translateY(-50%); opacity: 1; } }
+        @keyframes wave-pulse { 0% { transform: scale(0.5) translateY(-50%); opacity: 1; } 100% { transform: scale(2) translateY(-50%); opacity: 0; } }
+        @keyframes flash { 0% { opacity: 1; } 100% { opacity: 0; } }
+        @keyframes explosion { 0% { transform: scale(0.3); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.8; } 100% { transform: scale(2); opacity: 0; } }
+        @keyframes shockwave-ring { 0% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(15); opacity: 0; } }
+        @keyframes light-beam { 0% { transform: translate(-50%, 0) rotate(var(--angle)) scaleY(0); opacity: 1; } 50% { transform: translate(-50%, 0) rotate(var(--angle)) scaleY(1); opacity: 1; } 100% { transform: translate(-50%, 0) rotate(var(--angle)) scaleY(1.5); opacity: 0; } }
+        @keyframes hit-pop { 0% { transform: translate(-50%, 0) scale(0) rotate(-10deg); opacity: 0; } 50% { transform: translate(-50%, 0) scale(1.3) rotate(5deg); opacity: 1; } 100% { transform: translate(-50%, 0) scale(1) rotate(0deg); opacity: 1; } }
+        @keyframes damage-flash { 0%, 100% { opacity: 0.8; } 50% { opacity: 0.3; } }
+      `}</style>
+    </div>
+  );
+};
 
 const VersusScreen: React.FC<Props> = ({
   level,
@@ -21,10 +419,18 @@ const VersusScreen: React.FC<Props> = ({
   roundWinner,
   currentRound,
   totalRounds,
+  onHealthUpdate,
+  isPlayer2Connected = true,
+  onInvite,
+  onPlayer2Join,
+  inviteLink,
 }) => {
   const [player1Input, setPlayer1Input] = useState('');
   const [player2Input, setPlayer2Input] = useState('');
   const [showResult, setShowResult] = useState(false);
+  const [attackEffect, setAttackEffect] = useState<'left' | 'right' | null>(null);
+  const [showDamage, setShowDamage] = useState<1 | 2 | null>(null);
+  const [screenShake, setScreenShake] = useState(false);
   const player1InputRef = useRef<HTMLInputElement>(null);
   const player2InputRef = useRef<HTMLInputElement>(null);
 
@@ -37,12 +443,30 @@ const VersusScreen: React.FC<Props> = ({
   useEffect(() => {
     if (roundWinner !== null) {
       setShowResult(true);
+      // 공격 효과 표시
+      const attackDirection = roundWinner === 1 ? 'left' : 'right';
+      setAttackEffect(attackDirection);
+      setShowDamage(roundWinner === 1 ? 2 : 1);
+
+      // 화면 흔들림 효과 (임팩트 시점에)
+      setTimeout(() => {
+        setScreenShake(true);
+        setTimeout(() => setScreenShake(false), 400);
+      }, 500);
+
+      // 데미지 적용
+      if (onHealthUpdate) {
+        const targetPlayer = roundWinner === 1 ? 2 : 1;
+        onHealthUpdate(targetPlayer as 1 | 2, 20); // 20 데미지
+      }
+
       const timer = setTimeout(() => {
+        setShowDamage(null);
         onNextLevel();
-      }, 2000);
+      }, 2500);
       return () => clearTimeout(timer);
     }
-  }, [roundWinner, onNextLevel]);
+  }, [roundWinner, onNextLevel, onHealthUpdate]);
 
   const handlePlayer1Submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,25 +508,56 @@ const VersusScreen: React.FC<Props> = ({
   }, [showResult]);
 
   return (
-    <div className="h-full w-full flex flex-col" style={{ backgroundColor: '#fef8ed' }}>
-      {/* Header - Player Names & VS */}
-      <div className="flex items-center justify-between px-8 py-4 bg-white/50">
-        <div className="flex-1 text-center">
-          <span className="text-2xl font-bold text-blue-600">{players[0].name}</span>
-          <div className="text-lg text-gray-600">점수: {players[0].score}</div>
-        </div>
-        <div className="px-8">
-          <span className="text-3xl font-fredoka text-orange-500">VS</span>
-        </div>
-        <div className="flex-1 text-center">
-          <span className="text-2xl font-bold text-red-600">{players[1].name}</span>
-          <div className="text-lg text-gray-600">점수: {players[1].score}</div>
-        </div>
-      </div>
+    <div className={`h-full w-full flex flex-col relative ${screenShake ? 'screen-shake' : ''}`} style={{ backgroundColor: '#fef8ed' }}>
+      {/* 공격 이펙트 */}
+      {attackEffect && (
+        <AttackEffect
+          direction={attackEffect}
+          onComplete={() => setAttackEffect(null)}
+        />
+      )}
 
-      {/* Round indicator */}
-      <div className="text-center py-2 bg-gray-100">
-        <span className="text-gray-600 font-medium">라운드 {currentRound} / {totalRounds}</span>
+      {/* 스트리트 파이터 스타일 상단 HUD */}
+      <div className="bg-gradient-to-b from-gray-900 to-gray-800 px-4 py-3 shadow-lg">
+        {/* 라운드 표시 */}
+        <div className="text-center mb-2">
+          <span className="text-yellow-400 font-bold text-sm tracking-wider">
+            ROUND {currentRound} / {totalRounds}
+          </span>
+        </div>
+
+        {/* 에너지 게이지 바 */}
+        <div className="flex items-center gap-4">
+          <HealthBar
+            health={players[0].health}
+            maxHealth={100}
+            isLeft={true}
+            playerName={players[0].name}
+            showDamage={showDamage === 1}
+          />
+          <div className="flex-shrink-0">
+            <span className="text-3xl font-fredoka text-yellow-400 drop-shadow-lg">VS</span>
+          </div>
+          <HealthBar
+            health={players[1].health}
+            maxHealth={100}
+            isLeft={false}
+            playerName={players[1].name}
+            showDamage={showDamage === 2}
+          />
+        </div>
+
+        {/* 점수 표시 */}
+        <div className="flex justify-between mt-2 px-2">
+          <div className="flex items-center gap-2">
+            <span className="text-yellow-400 text-sm">WINS:</span>
+            <span className="text-white font-bold">{players[0].score}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-white font-bold">{players[1].score}</span>
+            <span className="text-yellow-400 text-sm">:WINS</span>
+          </div>
+        </div>
       </div>
 
       {/* Main Content - 3 Columns */}
@@ -188,41 +643,63 @@ const VersusScreen: React.FC<Props> = ({
 
         {/* Player 2 Area (Right) */}
         <div className="flex-1 flex flex-col items-center justify-center p-4 bg-red-50/50">
-          {/* Player 2 Character */}
-          <div className="mb-4">
-            <img
-              src={robotImage}
-              alt="Player 2"
-              className="w-36 h-36 md:w-48 md:h-48 object-contain"
-              style={{ filter: 'hue-rotate(-30deg)' }}
-            />
-          </div>
-          <div className="text-center mb-2">
-            <span className="text-sm text-gray-500">P키를 눌러 입력</span>
-          </div>
-          <form onSubmit={handlePlayer2Submit} className="w-full max-w-xs">
-            <input
-              ref={player2InputRef}
-              type="text"
-              value={player2Input}
-              onChange={(e) => setPlayer2Input(e.target.value)}
-              placeholder="단어를 입력하세요"
-              disabled={showResult}
-              className="w-full px-4 py-3 text-xl text-center border-2 border-red-300 rounded-xl focus:border-red-500 focus:outline-none disabled:bg-gray-100"
-              autoComplete="off"
-            />
-            <button
-              type="submit"
-              disabled={showResult || !player2Input.trim()}
-              className="w-full mt-3 py-3 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 text-white rounded-xl font-semibold transition-colors"
-            >
-              제출 (Enter)
-            </button>
-          </form>
-          {showResult && players[1].isCorrect !== null && (
-            <div className={`mt-3 text-2xl font-bold ${players[1].isCorrect ? 'text-green-500' : 'text-red-500'}`}>
-              {players[1].isCorrect ? '정답! ✓' : '오답 ✗'}
+          {!isPlayer2Connected ? (
+            /* 초대 대기 화면 */
+            <div className="flex flex-col items-center justify-center text-center">
+              <div className="w-36 h-36 md:w-48 md:h-48 rounded-full bg-gray-200 flex items-center justify-center mb-4 border-4 border-dashed border-gray-400">
+                <i className="fa-solid fa-user-plus text-4xl md:text-5xl text-gray-400"></i>
+              </div>
+              <p className="text-gray-500 mb-6 text-lg">Player 2 참가 대기중</p>
+
+              {/* 온라인 초대 버튼 */}
+              <button
+                onClick={onInvite}
+                className="w-full max-w-xs px-6 py-4 bg-teal-500 hover:bg-teal-600 text-white rounded-xl font-semibold transition-colors shadow-lg flex items-center justify-center gap-2"
+              >
+                <i className="fa-solid fa-share-nodes"></i>
+                친구 초대하기
+              </button>
             </div>
+          ) : (
+            /* 기존 Player 2 입력 화면 */
+            <>
+              {/* Player 2 Character */}
+              <div className="mb-4">
+                <img
+                  src={robotImage}
+                  alt="Player 2"
+                  className="w-36 h-36 md:w-48 md:h-48 object-contain"
+                  style={{ filter: 'hue-rotate(-30deg)' }}
+                />
+              </div>
+              <div className="text-center mb-2">
+                <span className="text-sm text-gray-500">P키를 눌러 입력</span>
+              </div>
+              <form onSubmit={handlePlayer2Submit} className="w-full max-w-xs">
+                <input
+                  ref={player2InputRef}
+                  type="text"
+                  value={player2Input}
+                  onChange={(e) => setPlayer2Input(e.target.value)}
+                  placeholder="단어를 입력하세요"
+                  disabled={showResult}
+                  className="w-full px-4 py-3 text-xl text-center border-2 border-red-300 rounded-xl focus:border-red-500 focus:outline-none disabled:bg-gray-100"
+                  autoComplete="off"
+                />
+                <button
+                  type="submit"
+                  disabled={showResult || !player2Input.trim()}
+                  className="w-full mt-3 py-3 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 text-white rounded-xl font-semibold transition-colors"
+                >
+                  제출 (Enter)
+                </button>
+              </form>
+              {showResult && players[1].isCorrect !== null && (
+                <div className={`mt-3 text-2xl font-bold ${players[1].isCorrect ? 'text-green-500' : 'text-red-500'}`}>
+                  {players[1].isCorrect ? '정답! ✓' : '오답 ✗'}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

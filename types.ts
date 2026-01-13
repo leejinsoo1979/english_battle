@@ -19,6 +19,7 @@ export interface Player {
   id: 1 | 2;
   name: string;
   score: number;
+  health: number; // 0-100 에너지 게이지
   currentInput: string;
   isCorrect: boolean | null;
 }

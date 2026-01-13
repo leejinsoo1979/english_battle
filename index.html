@@ -59,6 +59,22 @@
         @keyframes spin {
           to { transform: rotate(360deg); }
         }
+        /* 스트리트 파이터 스타일 화면 흔들림 */
+        @keyframes screen-shake {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          10% { transform: translate(-12px, -8px) rotate(-1deg); }
+          20% { transform: translate(12px, 8px) rotate(1deg); }
+          30% { transform: translate(-8px, 12px) rotate(-0.5deg); }
+          40% { transform: translate(8px, -12px) rotate(0.5deg); }
+          50% { transform: translate(-12px, 4px) rotate(-1deg); }
+          60% { transform: translate(12px, -4px) rotate(1deg); }
+          70% { transform: translate(-4px, 12px) rotate(-0.5deg); }
+          80% { transform: translate(4px, -12px) rotate(0.5deg); }
+          90% { transform: translate(-8px, 8px) rotate(0deg); }
+        }
+        .screen-shake {
+          animation: screen-shake 0.4s ease-in-out;
+        }
     </style>
 </head>
 <body>
