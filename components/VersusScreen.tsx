@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { QuizLevel, Player } from '../types';
+import { QuizLevel, Player, VersusGameType } from '../types';
 import robotImage from './images/robot.png';
 import { playSound } from '../utils/sounds';
+import { SpeedTypingGame, ScrambleGame, ListeningGame } from './versus-games';
 
 // 라운드 시작 효과 컴포넌트
 const RoundStartEffect: React.FC<{ round: number; onComplete: () => void }> = ({ round, onComplete }) => {
@@ -485,6 +486,14 @@ const LightningEffect: React.FC<{ side: 'left' | 'right'; onComplete: () => void
   );
 };
 
+// 게임 타입 설정
+const GAME_TYPES: { type: VersusGameType; name: string; icon: string; color: string }[] = [
+  { type: 'fill-blank', name: '빈칸 채우기', icon: 'fa-pen', color: 'from-orange-500 to-yellow-500' },
+  { type: 'speed-typing', name: '스피드 타이핑', icon: 'fa-keyboard', color: 'from-green-500 to-emerald-500' },
+  { type: 'scramble', name: '단어 스크램블', icon: 'fa-shuffle', color: 'from-purple-500 to-pink-500' },
+  { type: 'listening', name: '듣고 맞추기', icon: 'fa-headphones', color: 'from-cyan-500 to-blue-500' },
+];
+
 interface Props {
   level: QuizLevel;
   players: [Player, Player];
@@ -498,6 +507,8 @@ interface Props {
   onInvite?: () => void;
   onPlayer2Join?: () => void;
   inviteLink?: string;
+  gameType?: VersusGameType;
+  onGameTypeChange?: (type: VersusGameType) => void;
 }
 
 // 에너지 게이지 컴포넌트 (다크 스타일)
@@ -921,6 +932,8 @@ const VersusScreen: React.FC<Props> = ({
   onInvite,
   onPlayer2Join,
   inviteLink,
+  gameType = 'fill-blank',
+  onGameTypeChange,
 }) => {
   const [player1Input, setPlayer1Input] = useState('');
   const [player2Input, setPlayer2Input] = useState('');
@@ -930,9 +943,23 @@ const VersusScreen: React.FC<Props> = ({
   const [screenShake, setScreenShake] = useState(false);
   const [showRoundStart, setShowRoundStart] = useState(true);
   const [lightningTarget, setLightningTarget] = useState<'left' | 'right' | null>(null);
+  const [showGameSelector, setShowGameSelector] = useState(false);
+  const [currentGameType, setCurrentGameType] = useState<VersusGameType>(gameType);
   const player1InputRef = useRef<HTMLInputElement>(null);
   const player2InputRef = useRef<HTMLInputElement>(null);
   const prevRoundRef = useRef(currentRound);
+
+  // 라운드마다 게임 타입 랜덤 선택
+  useEffect(() => {
+    if (prevRoundRef.current !== currentRound) {
+      // 랜덤 게임 타입 선택
+      const randomType = GAME_TYPES[Math.floor(Math.random() * GAME_TYPES.length)].type;
+      setCurrentGameType(randomType);
+      if (onGameTypeChange) {
+        onGameTypeChange(randomType);
+      }
+    }
+  }, [currentRound, onGameTypeChange]);
 
   // 라운드 변경 시 라운드 시작 효과 표시
   useEffect(() => {
@@ -1065,10 +1092,15 @@ const VersusScreen: React.FC<Props> = ({
             ))}
           </div>
 
-          {/* 라운드 표시 */}
-          <span className="text-yellow-400 font-bold text-sm tracking-widest uppercase drop-shadow-lg">
-            Round {currentRound}
-          </span>
+          {/* 라운드 표시 + 게임 타입 */}
+          <div className="flex flex-col items-center">
+            <span className="text-yellow-400 font-bold text-sm tracking-widest uppercase drop-shadow-lg">
+              Round {currentRound}
+            </span>
+            <span className="text-xs text-gray-400 mt-0.5">
+              {GAME_TYPES.find(g => g.type === currentGameType)?.name}
+            </span>
+          </div>
 
           {/* Player 2 승리 표시 */}
           <div className="flex items-center gap-1.5">
