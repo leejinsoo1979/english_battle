@@ -11,9 +11,11 @@ interface Props {
   level: QuizLevel;
   onComplete: (score: number) => void;
   onSkip?: () => void;
+  isAIMode?: boolean;
+  onAddToLevels?: () => void;
 }
 
-const QuizScreen: React.FC<Props> = ({ level, onComplete, onSkip }) => {
+const QuizScreen: React.FC<Props> = ({ level, onComplete, onSkip, isAIMode, onAddToLevels }) => {
   const [placedLetters, setPlacedLetters] = useState<(string | null)[]>(
     new Array(level.targetWord.length).fill(null)
   );
@@ -306,6 +308,17 @@ const QuizScreen: React.FC<Props> = ({ level, onComplete, onSkip }) => {
           >
             <i className="fa-solid fa-forward mr-2"></i>
             스킵
+          </button>
+        )}
+
+        {/* Add to Levels Button (AI Mode) */}
+        {isAIMode && onAddToLevels && (
+          <button
+            onClick={onAddToLevels}
+            className="px-4 py-3 rounded-xl bg-purple-500 hover:bg-purple-600 text-white font-fredoka text-base shadow-lg transition-all hover:scale-105 active:scale-95"
+          >
+            <i className="fa-solid fa-plus mr-2"></i>
+            레벨에 추가
           </button>
         )}
 

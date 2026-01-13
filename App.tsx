@@ -47,6 +47,7 @@ const App: React.FC = () => {
   // 온라인 게임 상태
   const [onlineRoomId, setOnlineRoomId] = useState<string | null>(null);
   const [isOnlineHost, setIsOnlineHost] = useState(false);
+  const [currentAILevel, setCurrentAILevel] = useState<QuizLevel | null>(null);
 
   // 대전 게임 모드 상태
   const [showModeSelector, setShowModeSelector] = useState(false);
@@ -198,6 +199,7 @@ const App: React.FC = () => {
     try {
       const aiLevel = await generateQuizWithAI();
       if (aiLevel) {
+        setCurrentAILevel(aiLevel);
         setLevels([aiLevel]);
         setGameState({
           currentLevelIndex: 0,
@@ -218,6 +220,43 @@ const App: React.FC = () => {
     } finally {
       setIsLoadingAI(false);
     }
+  };
+
+  // AI 퀴즈를 레벨 목록에 추가
+  const addAILevelToList = () => {
+    if (!currentAILevel) return;
+
+    const saved = localStorage.getItem(STORAGE_KEY);
+    let existingLevels: QuizLevel[] = [];
+    if (saved) {
+      try {
+        existingLevels = JSON.parse(saved);
+      } catch {
+        existingLevels = DEFAULT_LEVELS;
+      }
+    } else {
+      existingLevels = DEFAULT_LEVELS;
+    }
+
+    // 중복 체크 (같은 단어가 이미 있는지)
+    const isDuplicate = existingLevels.some(
+      level => level.targetWord.toLowerCase() === currentAILevel.targetWord.toLowerCase()
+    );
+
+    if (isDuplicate) {
+      alert(`"${currentAILevel.targetWord}" 단어가 이미 레벨 목록에 있습니다.`);
+      return;
+    }
+
+    // 새 레벨에 고유 ID 부여
+    const newLevel: QuizLevel = {
+      ...currentAILevel,
+      id: Date.now(),
+    };
+
+    const updatedLevels = [...existingLevels, newLevel];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedLevels));
+    alert(`"${currentAILevel.targetWord}" 단어가 레벨 목록에 추가되었습니다!`);
   };
 
   const [isPlayer2Connected, setIsPlayer2Connected] = useState(false);
@@ -478,6 +517,7 @@ const App: React.FC = () => {
       try {
         const newLevel = await generateQuizWithAI();
         if (newLevel) {
+          setCurrentAILevel(newLevel);
           setLevels([newLevel]);
           setGameState(prev => ({
             ...prev,
@@ -622,6 +662,8 @@ const App: React.FC = () => {
             level={currentLevel}
             onComplete={handleLevelComplete}
             onSkip={() => handleLevelComplete(0)}
+            isAIMode={isAIMode}
+            onAddToLevels={addAILevelToList}
           />
         </>
       )}

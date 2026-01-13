@@ -421,19 +421,45 @@ const PlayerPodium: React.FC<{
   showResult: boolean;
 }> = ({ player, position, isActive, showResult }) => {
   const color = PLAYER_COLORS[position];
+  const isCorrectAndRevealed = showResult && player.isCorrect === true;
 
   return (
     <motion.div
       initial={{ y: 100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay: position * 0.15 }}
+      animate={{
+        y: isCorrectAndRevealed ? [0, -30, 0, -20, 0, -10, 0] : 0,
+        opacity: 1,
+        scale: isCorrectAndRevealed ? [1, 1.2, 1, 1.15, 1, 1.1, 1] : 1,
+      }}
+      transition={{
+        delay: isCorrectAndRevealed ? 0 : position * 0.15,
+        duration: isCorrectAndRevealed ? 1 : 0.3,
+      }}
       className="flex flex-col items-center"
     >
+      {/* 정답자 스포트라이트 */}
+      <AnimatePresence>
+        {isCorrectAndRevealed && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1.5 }}
+            exit={{ opacity: 0 }}
+            className="absolute -inset-8 -z-10"
+            style={{
+              background: `radial-gradient(circle, ${color.glow} 0%, transparent 70%)`,
+              filter: 'blur(20px)',
+            }}
+          />
+        )}
+      </AnimatePresence>
+
       {/* 캐릭터 영역 */}
       <motion.div
         animate={isActive ? {
           y: [0, -10, 0],
           scale: [1, 1.05, 1],
+        } : isCorrectAndRevealed ? {
+          rotate: [0, -10, 10, -10, 10, 0],
         } : {}}
         transition={{ duration: 0.5, repeat: isActive ? Infinity : 0 }}
         className="relative mb-2"
@@ -495,6 +521,34 @@ const PlayerPodium: React.FC<{
             🔥 {player.streak}
           </motion.div>
         )}
+
+        {/* 정답 시 이모지 파티클 */}
+        <AnimatePresence>
+          {isCorrectAndRevealed && (
+            <>
+              {['🎉', '⭐', '🌟', '✨', '🏆'].map((emoji, i) => (
+                <motion.div
+                  key={`emoji-${i}`}
+                  initial={{ opacity: 1, y: 0, x: 0, scale: 0 }}
+                  animate={{
+                    opacity: [1, 1, 0],
+                    y: -80 - Math.random() * 40,
+                    x: (Math.random() - 0.5) * 80,
+                    scale: [0, 1.5, 1],
+                    rotate: Math.random() * 360,
+                  }}
+                  transition={{
+                    duration: 1.2,
+                    delay: i * 0.1,
+                  }}
+                  className="absolute top-0 left-1/2 text-2xl pointer-events-none"
+                >
+                  {emoji}
+                </motion.div>
+              ))}
+            </>
+          )}
+        </AnimatePresence>
       </motion.div>
 
       {/* 이름 & 점수 패널 */}
@@ -634,6 +688,205 @@ const ResultModal: React.FC<{
   );
 };
 
+// 정답 임팩트 효과 컴포넌트
+const CorrectImpactEffect: React.FC<{
+  isVisible: boolean;
+  playerName?: string;
+  bonusPoints?: number;
+}> = ({ isVisible, playerName, bonusPoints }) => {
+  return (
+    <AnimatePresence>
+      {isVisible && (
+        <>
+          {/* 화면 플래시 */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 1, 0.8, 0] }}
+            transition={{ duration: 0.5 }}
+            className="fixed inset-0 z-[100] pointer-events-none"
+            style={{
+              background: 'radial-gradient(circle at center, rgba(16, 185, 129, 0.8) 0%, rgba(16, 185, 129, 0.4) 40%, transparent 70%)',
+            }}
+          />
+
+          {/* CORRECT 텍스트 */}
+          <motion.div
+            initial={{ scale: 0, rotate: -15 }}
+            animate={{
+              scale: [0, 1.5, 1.2],
+              rotate: [-15, 5, 0],
+            }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{
+              duration: 0.6,
+              type: "spring",
+              stiffness: 200,
+            }}
+            className="fixed inset-0 z-[101] flex items-center justify-center pointer-events-none"
+          >
+            <div className="text-center">
+              <h1
+                className="text-6xl md:text-8xl font-fredoka font-black"
+                style={{
+                  background: 'linear-gradient(135deg, #10B981 0%, #34D399 30%, #6EE7B7 50%, #34D399 70%, #10B981 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  filter: 'drop-shadow(0 0 30px rgba(16, 185, 129, 0.8)) drop-shadow(0 0 60px rgba(16, 185, 129, 0.5))',
+                  textShadow: '0 0 40px rgba(16, 185, 129, 0.8)',
+                }}
+              >
+                CORRECT!
+              </h1>
+
+              {/* 보너스 포인트 */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="mt-4"
+              >
+                <span className="text-3xl md:text-4xl font-bold text-yellow-400"
+                  style={{ textShadow: '0 0 20px rgba(250, 204, 21, 0.8)' }}
+                >
+                  +{bonusPoints || 10} pts
+                </span>
+              </motion.div>
+
+              {/* 플레이어 이름 */}
+              {playerName && (
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="mt-2 text-xl text-white/80"
+                >
+                  {playerName} 🎉
+                </motion.div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* 방사형 광선 효과 */}
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: [0, 3], opacity: [0.8, 0] }}
+            transition={{ duration: 1 }}
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[99] pointer-events-none"
+          >
+            {[...Array(12)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-2 h-40 bg-gradient-to-t from-green-500 to-transparent origin-bottom"
+                style={{
+                  transform: `rotate(${i * 30}deg)`,
+                  left: '50%',
+                  bottom: '50%',
+                }}
+              />
+            ))}
+          </motion.div>
+
+          {/* 별 파티클 */}
+          {[...Array(20)].map((_, i) => (
+            <motion.div
+              key={`star-${i}`}
+              initial={{
+                x: '50vw',
+                y: '50vh',
+                scale: 0,
+                opacity: 1,
+              }}
+              animate={{
+                x: `${Math.random() * 100}vw`,
+                y: `${Math.random() * 100}vh`,
+                scale: [0, 1.5, 0],
+                opacity: [1, 1, 0],
+                rotate: [0, 360],
+              }}
+              transition={{
+                duration: 1 + Math.random() * 0.5,
+                delay: Math.random() * 0.2,
+              }}
+              className="fixed z-[102] pointer-events-none text-2xl md:text-4xl"
+            >
+              {['⭐', '✨', '🌟', '💫'][Math.floor(Math.random() * 4)]}
+            </motion.div>
+          ))}
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
+// 오답 임팩트 효과 컴포넌트
+const WrongImpactEffect: React.FC<{ isVisible: boolean }> = ({ isVisible }) => {
+  return (
+    <AnimatePresence>
+      {isVisible && (
+        <>
+          {/* 빨간 플래시 */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 0.6, 0] }}
+            transition={{ duration: 0.4 }}
+            className="fixed inset-0 z-[100] pointer-events-none bg-red-600"
+          />
+
+          {/* WRONG 텍스트 */}
+          <motion.div
+            initial={{ scale: 2, opacity: 0 }}
+            animate={{
+              scale: [2, 0.8, 1],
+              opacity: [0, 1, 1],
+              x: [0, -10, 10, -10, 10, 0],
+            }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="fixed inset-0 z-[101] flex items-center justify-center pointer-events-none"
+          >
+            <h1
+              className="text-5xl md:text-7xl font-fredoka font-black text-red-500"
+              style={{
+                filter: 'drop-shadow(0 0 20px rgba(239, 68, 68, 0.8))',
+                textShadow: '0 0 30px rgba(239, 68, 68, 0.8)',
+              }}
+            >
+              WRONG!
+            </h1>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
+// 스크린 쉐이크 래퍼
+const ScreenShake: React.FC<{
+  children: React.ReactNode;
+  isShaking: boolean;
+  intensity?: 'light' | 'medium' | 'heavy';
+}> = ({ children, isShaking, intensity = 'medium' }) => {
+  const shakeAmounts = {
+    light: 3,
+    medium: 6,
+    heavy: 12,
+  };
+  const amount = shakeAmounts[intensity];
+
+  return (
+    <motion.div
+      animate={isShaking ? {
+        x: [0, -amount, amount, -amount, amount, 0],
+        y: [0, amount/2, -amount/2, amount/2, -amount/2, 0],
+      } : {}}
+      transition={{ duration: 0.4 }}
+      className="h-full w-full"
+    >
+      {children}
+    </motion.div>
+  );
+};
+
 // 메인 컴포넌트
 interface Props {
   onExit: () => void;
@@ -662,6 +915,10 @@ const QuizShowScreen: React.FC<Props> = ({ onExit, playerCount = 4 }) => {
   const [gamePhase, setGamePhase] = useState<'intro' | 'playing' | 'revealing' | 'result'>('intro');
   const [activePlayer, setActivePlayer] = useState<number | null>(null);
   const [showGameResult, setShowGameResult] = useState(false);
+  const [showCorrectEffect, setShowCorrectEffect] = useState(false);
+  const [showWrongEffect, setShowWrongEffect] = useState(false);
+  const [isScreenShaking, setIsScreenShaking] = useState(false);
+  const [lastBonusPoints, setLastBonusPoints] = useState(0);
 
   const currentQuestion = questions[currentQuestionIndex];
   const timerRef = useRef<number | null>(null);
@@ -693,10 +950,62 @@ const QuizShowScreen: React.FC<Props> = ({ onExit, playerCount = 4 }) => {
     };
   }, [gamePhase, timeLeft]);
 
+  // 대형 confetti 폭발 효과
+  const triggerMassiveConfetti = useCallback(() => {
+    // 중앙 폭발
+    confetti({
+      particleCount: 150,
+      spread: 100,
+      origin: { x: 0.5, y: 0.5 },
+      colors: ['#10B981', '#34D399', '#6EE7B7', '#FFD700', '#FFA500'],
+      ticks: 200,
+      gravity: 0.8,
+      scalar: 1.2,
+    });
+
+    // 좌측 폭발
+    setTimeout(() => {
+      confetti({
+        particleCount: 80,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0, y: 0.6 },
+        colors: ['#10B981', '#34D399', '#FFD700'],
+      });
+    }, 100);
+
+    // 우측 폭발
+    setTimeout(() => {
+      confetti({
+        particleCount: 80,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1, y: 0.6 },
+        colors: ['#10B981', '#34D399', '#FFD700'],
+      });
+    }, 200);
+
+    // 상단 폭발
+    setTimeout(() => {
+      confetti({
+        particleCount: 100,
+        angle: 270,
+        spread: 80,
+        origin: { x: 0.5, y: 0 },
+        colors: ['#FFD700', '#FFA500', '#FF6B6B'],
+        gravity: 1.5,
+      });
+    }, 300);
+  }, []);
+
   // 정답 공개
   const handleReveal = useCallback(() => {
     setGamePhase('revealing');
     setCorrectOption(currentQuestion.correctIndex);
+
+    const hasCorrectAnswer = players.some(p => p.lastAnswer === currentQuestion.correctIndex);
+    const bonusPoints = 10 + timeLeft;
+    setLastBonusPoints(bonusPoints);
 
     // 점수 계산
     setPlayers(prev => prev.map(player => {
@@ -704,21 +1013,38 @@ const QuizShowScreen: React.FC<Props> = ({ onExit, playerCount = 4 }) => {
       return {
         ...player,
         isCorrect,
-        score: isCorrect ? player.score + (10 + timeLeft) : player.score,
+        score: isCorrect ? player.score + bonusPoints : player.score,
         streak: isCorrect ? player.streak + 1 : 0,
       };
     }));
 
-    // 정답 효과
-    if (players.some(p => p.lastAnswer === currentQuestion.correctIndex)) {
-      playSound('correct', 0.5);
-      confetti({
-        particleCount: 50,
-        spread: 60,
-        origin: { y: 0.7 },
-      });
+    // 정답/오답 임팩트 효과
+    if (hasCorrectAnswer) {
+      // 정답 효과들
+      playSound('correct', 0.7);
+      setShowCorrectEffect(true);
+      setIsScreenShaking(true);
+      triggerMassiveConfetti();
+
+      // 연속 confetti
+      setTimeout(() => triggerMassiveConfetti(), 400);
+      setTimeout(() => triggerMassiveConfetti(), 800);
+
+      // 효과 종료
+      setTimeout(() => {
+        setShowCorrectEffect(false);
+        setIsScreenShaking(false);
+      }, 2000);
     } else {
-      playSound('wrong', 0.5);
+      // 오답 효과
+      playSound('wrong', 0.6);
+      setShowWrongEffect(true);
+      setIsScreenShaking(true);
+
+      setTimeout(() => {
+        setShowWrongEffect(false);
+        setIsScreenShaking(false);
+      }, 1000);
     }
 
     // 다음 문제로
@@ -737,7 +1063,7 @@ const QuizShowScreen: React.FC<Props> = ({ onExit, playerCount = 4 }) => {
         setGamePhase('result');
       }
     }, 3000);
-  }, [currentQuestion, currentQuestionIndex, questions.length, players, timeLeft]);
+  }, [currentQuestion, currentQuestionIndex, questions.length, players, timeLeft, triggerMassiveConfetti]);
 
   // 답변 선택
   const handleSelect = useCallback((optionIndex: number) => {
@@ -797,9 +1123,18 @@ const QuizShowScreen: React.FC<Props> = ({ onExit, playerCount = 4 }) => {
   };
 
   const winner = [...players].sort((a, b) => b.score - a.score)[0];
+  const correctPlayerName = players.find(p => p.isCorrect)?.name;
 
   return (
+    <ScreenShake isShaking={isScreenShaking} intensity={showCorrectEffect ? 'heavy' : 'medium'}>
     <div className="h-full w-full flex flex-col relative overflow-hidden bg-[#0a0a15]">
+      {/* 임팩트 효과 */}
+      <CorrectImpactEffect
+        isVisible={showCorrectEffect}
+        playerName={correctPlayerName}
+        bonusPoints={lastBonusPoints}
+      />
+      <WrongImpactEffect isVisible={showWrongEffect} />
       {/* 배경 효과 */}
       <LEDBackground isCorrect={correctOption !== null && selectedOption === correctOption} isWrong={correctOption !== null && selectedOption !== correctOption} />
       <StudioLights />
@@ -887,6 +1222,7 @@ const QuizShowScreen: React.FC<Props> = ({ onExit, playerCount = 4 }) => {
         onExit={onExit}
       />
     </div>
+    </ScreenShake>
   );
 };
 

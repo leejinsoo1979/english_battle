@@ -1189,6 +1189,56 @@ const VersusScreen: React.FC<Props> = ({
           />
         )}
 
+        {/* 떨어지는 글자 게임 */}
+        {currentGameType === 'falling-letters' && (
+          <FallingLettersGame
+            level={level}
+            onPlayer1Answer={(answer) => onAnswer(1, answer)}
+            onPlayer2Answer={(answer) => onAnswer(2, answer)}
+            disabled={showResult}
+          />
+        )}
+
+        {/* 풍선 슈터 게임 */}
+        {currentGameType === 'word-shooter' && (
+          <WordShooterGame
+            level={level}
+            onPlayer1Answer={(answer) => onAnswer(1, answer)}
+            onPlayer2Answer={(answer) => onAnswer(2, answer)}
+            disabled={showResult}
+          />
+        )}
+
+        {/* 메모리 매치 게임 */}
+        {currentGameType === 'memory-match' && (
+          <MemoryMatchGame
+            level={level}
+            onPlayer1Answer={(answer) => onAnswer(1, answer)}
+            onPlayer2Answer={(answer) => onAnswer(2, answer)}
+            disabled={showResult}
+          />
+        )}
+
+        {/* 뱀 게임 */}
+        {currentGameType === 'word-snake' && (
+          <WordSnakeGame
+            level={level}
+            onPlayer1Answer={(answer) => onAnswer(1, answer)}
+            onPlayer2Answer={(answer) => onAnswer(2, answer)}
+            disabled={showResult}
+          />
+        )}
+
+        {/* 폭탄 해제 게임 */}
+        {currentGameType === 'bomb' && (
+          <BombGame
+            level={level}
+            onPlayer1Answer={(answer) => onAnswer(1, answer)}
+            onPlayer2Answer={(answer) => onAnswer(2, answer)}
+            disabled={showResult}
+          />
+        )}
+
         {/* 빈칸 채우기 (기본) */}
         {currentGameType === 'fill-blank' && (
           <>
