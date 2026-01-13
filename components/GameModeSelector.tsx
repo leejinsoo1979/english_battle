@@ -6,51 +6,158 @@ interface GameModeOption {
   type: VersusGameType | 'random';
   name: string;
   description: string;
-  icon: string;
   gradient: string;
   shadowColor: string;
+  thumbnail: React.ReactNode;
 }
+
+// 썸네일 SVG 컴포넌트들
+const RandomThumbnail = () => (
+  <svg viewBox="0 0 80 80" className="w-full h-full">
+    <defs>
+      <linearGradient id="randGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#f59e0b" />
+        <stop offset="100%" stopColor="#ef4444" />
+      </linearGradient>
+    </defs>
+    <rect x="10" y="10" width="25" height="25" rx="4" fill="url(#randGrad)" opacity="0.9" />
+    <rect x="45" y="10" width="25" height="25" rx="4" fill="#10b981" opacity="0.9" />
+    <rect x="10" y="45" width="25" height="25" rx="4" fill="#8b5cf6" opacity="0.9" />
+    <rect x="45" y="45" width="25" height="25" rx="4" fill="#0ea5e9" opacity="0.9" />
+    <text x="22" y="28" fontSize="14" fill="white" fontWeight="bold" textAnchor="middle">?</text>
+    <text x="57" y="28" fontSize="14" fill="white" fontWeight="bold" textAnchor="middle">!</text>
+    <text x="22" y="63" fontSize="14" fill="white" fontWeight="bold" textAnchor="middle">A</text>
+    <text x="57" y="63" fontSize="14" fill="white" fontWeight="bold" textAnchor="middle">Z</text>
+  </svg>
+);
+
+const FillBlankThumbnail = () => (
+  <svg viewBox="0 0 80 80" className="w-full h-full">
+    <defs>
+      <linearGradient id="fillGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#f43f5e" />
+        <stop offset="100%" stopColor="#d946ef" />
+      </linearGradient>
+    </defs>
+    <rect x="8" y="30" width="15" height="20" rx="3" fill="url(#fillGrad)" />
+    <text x="15.5" y="44" fontSize="12" fill="white" fontWeight="bold" textAnchor="middle">C</text>
+    <rect x="26" y="30" width="15" height="20" rx="3" fill="url(#fillGrad)" />
+    <text x="33.5" y="44" fontSize="12" fill="white" fontWeight="bold" textAnchor="middle">A</text>
+    <rect x="44" y="30" width="15" height="20" rx="3" stroke="url(#fillGrad)" strokeWidth="2" strokeDasharray="4 2" fill="none" />
+    <text x="51.5" y="44" fontSize="12" fill="#f43f5e" fontWeight="bold" textAnchor="middle">?</text>
+    <rect x="62" y="30" width="15" height="20" rx="3" fill="url(#fillGrad)" />
+    <text x="69.5" y="44" fontSize="12" fill="white" fontWeight="bold" textAnchor="middle">E</text>
+    <path d="M48 58 L55 65 L48 72" stroke="#f43f5e" strokeWidth="2" fill="none" strokeLinecap="round" />
+    <text x="40" y="70" fontSize="10" fill="#f43f5e" fontWeight="bold" textAnchor="middle">T</text>
+  </svg>
+);
+
+const SpeedThumbnail = () => (
+  <svg viewBox="0 0 80 80" className="w-full h-full">
+    <defs>
+      <linearGradient id="speedGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#34d399" />
+        <stop offset="100%" stopColor="#14b8a6" />
+      </linearGradient>
+    </defs>
+    <rect x="10" y="25" width="60" height="30" rx="6" fill="#1f2937" stroke="url(#speedGrad)" strokeWidth="2" />
+    <rect x="14" y="32" width="12" height="16" rx="2" fill="url(#speedGrad)" />
+    <text x="20" y="44" fontSize="10" fill="white" fontWeight="bold" textAnchor="middle">A</text>
+    <rect x="29" y="32" width="12" height="16" rx="2" fill="url(#speedGrad)" />
+    <text x="35" y="44" fontSize="10" fill="white" fontWeight="bold" textAnchor="middle">B</text>
+    <rect x="44" y="32" width="12" height="16" rx="2" fill="url(#speedGrad)" />
+    <text x="50" y="44" fontSize="10" fill="white" fontWeight="bold" textAnchor="middle">C</text>
+    <path d="M62 35 L70 40 L62 45" fill="url(#speedGrad)" />
+    <path d="M58 35 L66 40 L58 45" fill="url(#speedGrad)" opacity="0.5" />
+    <circle cx="65" cy="18" r="8" fill="url(#speedGrad)" />
+    <path d="M65 12 L65 18 L69 18" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+  </svg>
+);
+
+const ScrambleThumbnail = () => (
+  <svg viewBox="0 0 80 80" className="w-full h-full">
+    <defs>
+      <linearGradient id="scramGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#8b5cf6" />
+        <stop offset="100%" stopColor="#6366f1" />
+      </linearGradient>
+    </defs>
+    <rect x="8" y="15" width="18" height="18" rx="4" fill="url(#scramGrad)" transform="rotate(-15 17 24)" />
+    <text x="17" y="28" fontSize="11" fill="white" fontWeight="bold" textAnchor="middle" transform="rotate(-15 17 24)">P</text>
+    <rect x="32" y="12" width="18" height="18" rx="4" fill="url(#scramGrad)" transform="rotate(10 41 21)" />
+    <text x="41" y="25" fontSize="11" fill="white" fontWeight="bold" textAnchor="middle" transform="rotate(10 41 21)">L</text>
+    <rect x="54" y="18" width="18" height="18" rx="4" fill="url(#scramGrad)" transform="rotate(-8 63 27)" />
+    <text x="63" y="31" fontSize="11" fill="white" fontWeight="bold" textAnchor="middle" transform="rotate(-8 63 27)">A</text>
+    <path d="M25 45 C30 50, 50 50, 55 45" stroke="#8b5cf6" strokeWidth="2" fill="none" strokeDasharray="3 2" />
+    <path d="M40 42 L40 48 M37 45 L43 45" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" />
+    <rect x="15" y="55" width="16" height="16" rx="3" fill="url(#scramGrad)" />
+    <text x="23" y="67" fontSize="10" fill="white" fontWeight="bold" textAnchor="middle">A</text>
+    <rect x="33" y="55" width="16" height="16" rx="3" fill="url(#scramGrad)" />
+    <text x="41" y="67" fontSize="10" fill="white" fontWeight="bold" textAnchor="middle">P</text>
+    <rect x="51" y="55" width="16" height="16" rx="3" fill="url(#scramGrad)" />
+    <text x="59" y="67" fontSize="10" fill="white" fontWeight="bold" textAnchor="middle">L</text>
+  </svg>
+);
+
+const ListenThumbnail = () => (
+  <svg viewBox="0 0 80 80" className="w-full h-full">
+    <defs>
+      <linearGradient id="listenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#22d3ee" />
+        <stop offset="100%" stopColor="#3b82f6" />
+      </linearGradient>
+    </defs>
+    <circle cx="30" cy="40" r="18" fill="url(#listenGrad)" />
+    <circle cx="30" cy="40" r="12" fill="#0f172a" />
+    <circle cx="30" cy="40" r="6" fill="url(#listenGrad)" />
+    <path d="M48 32 Q55 40, 48 48" stroke="url(#listenGrad)" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+    <path d="M54 26 Q65 40, 54 54" stroke="url(#listenGrad)" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+    <path d="M60 20 Q75 40, 60 60" stroke="url(#listenGrad)" strokeWidth="2.5" fill="none" strokeLinecap="round" opacity="0.6" />
+    <rect x="20" y="60" width="40" height="12" rx="3" fill="#1f2937" />
+    <line x1="24" y1="66" x2="56" y2="66" stroke="url(#listenGrad)" strokeWidth="2" strokeLinecap="round" strokeDasharray="2 4" />
+  </svg>
+);
 
 const GAME_MODES: GameModeOption[] = [
   {
     type: 'random',
     name: 'RANDOM',
     description: '매 라운드 새로운 도전',
-    icon: 'fa-random',
     gradient: 'from-amber-500 via-orange-500 to-red-500',
     shadowColor: 'rgba(251, 146, 60, 0.4)',
+    thumbnail: <RandomThumbnail />,
   },
   {
     type: 'fill-blank',
     name: 'FILL IN',
     description: '빈칸을 채워라',
-    icon: 'fa-i-cursor',
     gradient: 'from-rose-500 via-pink-500 to-fuchsia-500',
     shadowColor: 'rgba(236, 72, 153, 0.4)',
+    thumbnail: <FillBlankThumbnail />,
   },
   {
     type: 'speed-typing',
     name: 'SPEED',
     description: '빠르게 타이핑',
-    icon: 'fa-bolt',
     gradient: 'from-emerald-400 via-green-500 to-teal-500',
     shadowColor: 'rgba(16, 185, 129, 0.4)',
+    thumbnail: <SpeedThumbnail />,
   },
   {
     type: 'scramble',
     name: 'SCRAMBLE',
     description: '섞인 글자를 맞춰라',
-    icon: 'fa-arrows-rotate',
     gradient: 'from-violet-500 via-purple-500 to-indigo-500',
     shadowColor: 'rgba(139, 92, 246, 0.4)',
+    thumbnail: <ScrambleThumbnail />,
   },
   {
     type: 'listening',
     name: 'LISTEN',
     description: '듣고 입력하라',
-    icon: 'fa-volume-high',
     gradient: 'from-cyan-400 via-sky-500 to-blue-500',
     shadowColor: 'rgba(14, 165, 233, 0.4)',
+    thumbnail: <ListenThumbnail />,
   },
 ];
 

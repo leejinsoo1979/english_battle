@@ -22,6 +22,7 @@ const QuizScreen: React.FC<Props> = ({ level, onComplete, onSkip }) => {
   const [showPhonics, setShowPhonics] = useState(false);
   const [screenShake, setScreenShake] = useState(false);
   const [countdown, setCountdown] = useState(30);
+  const [isSkipped, setIsSkipped] = useState(false);
 
   useEffect(() => {
     const wordLetters = level.targetWord.split('');
@@ -32,6 +33,7 @@ const QuizScreen: React.FC<Props> = ({ level, onComplete, onSkip }) => {
     setShowPhonics(false);
     setScreenShake(false);
     setCountdown(30);
+    setIsSkipped(false);
   }, [level]);
 
   // Countdown timer
@@ -82,6 +84,25 @@ const QuizScreen: React.FC<Props> = ({ level, onComplete, onSkip }) => {
       onComplete(10);
     }, 4500);
   }, [level, speak, onComplete]);
+
+  // 스킵 - 정답 보여주고 넘기기
+  const handleSkip = useCallback(() => {
+    if (isWordCorrect || isSkipped) return;
+
+    setIsSkipped(true);
+    // 정답을 슬롯에 채우기
+    setPlacedLetters(level.targetWord.split(''));
+    setAvailableLetters([]);
+    playSound('pop', 0.3);
+    speak(level.targetWord);
+
+    // 2초 후 다음으로
+    setTimeout(() => {
+      if (onSkip) {
+        onSkip();
+      }
+    }, 2000);
+  }, [isWordCorrect, isSkipped, level.targetWord, speak, onSkip]);
 
   const handleDrop = useCallback((letterId: string, slotIndex: number) => {
     const letterObj = availableLetters.find(l => l.id === letterId);
@@ -278,12 +299,9 @@ const QuizScreen: React.FC<Props> = ({ level, onComplete, onSkip }) => {
       {/* Status Bar & Skip Button */}
       <div className="w-full flex gap-2 mt-4">
         {/* Skip Button */}
-        {!isWordCorrect && onSkip && (
+        {!isWordCorrect && !isSkipped && onSkip && (
           <button
-            onClick={() => {
-              playSound('pop', 0.2);
-              onSkip();
-            }}
+            onClick={handleSkip}
             className="px-4 py-3 rounded-xl bg-gray-400 hover:bg-gray-500 text-white font-fredoka text-base shadow-lg transition-all hover:scale-105 active:scale-95"
           >
             <i className="fa-solid fa-forward mr-2"></i>
@@ -293,9 +311,9 @@ const QuizScreen: React.FC<Props> = ({ level, onComplete, onSkip }) => {
 
         {/* Status Bar */}
         <div className={`flex-1 py-3 rounded-xl text-white font-fredoka text-base text-center shadow-lg transition-all ${
-            isWordCorrect ? 'bg-teal-400 scale-105' : 'bg-gray-300'
+            isWordCorrect ? 'bg-teal-400 scale-105' : isSkipped ? 'bg-orange-400' : 'bg-gray-300'
           }`}>
-          {isWordCorrect ? 'AMAZING! GOING TO NEXT...' : 'TYPE OR DRAG BLOCKS!'}
+          {isWordCorrect ? 'AMAZING! GOING TO NEXT...' : isSkipped ? `정답: ${level.targetWord.toUpperCase()}` : 'TYPE OR DRAG BLOCKS!'}
         </div>
       </div>
     </div>
