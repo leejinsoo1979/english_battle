@@ -1112,13 +1112,22 @@ const VersusScreen: React.FC<Props> = ({
         {/* Player 1 Area (Left) */}
         <div className="flex-1 flex flex-col items-center justify-center p-4 bg-transparent">
           {/* Player 1 Character */}
-          <div className="mb-4">
-            <img
-              src={robotImage}
-              alt="Player 1"
-              className="w-36 h-36 md:w-48 md:h-48 object-contain drop-shadow-lg"
-              style={{ filter: 'hue-rotate(200deg) drop-shadow(0 0 20px rgba(59, 130, 246, 0.5))' }}
-            />
+          <div className="mb-4 relative">
+            <div
+              className="w-36 h-36 md:w-48 md:h-48 relative flex items-center justify-center"
+              style={{
+                filter: 'drop-shadow(0 0 25px rgba(59, 130, 246, 0.8))',
+              }}
+            >
+              <img
+                src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png"
+                alt="Player 1"
+                className="w-full h-full object-contain"
+                style={{
+                  filter: 'hue-rotate(200deg) brightness(1.1)',
+                }}
+              />
+            </div>
           </div>
           <div className="text-center mb-2">
             <span className="text-sm text-blue-300">Q키를 눌러 입력</span>
@@ -1211,13 +1220,22 @@ const VersusScreen: React.FC<Props> = ({
             /* 기존 Player 2 입력 화면 */
             <>
               {/* Player 2 Character */}
-              <div className="mb-4">
-                <img
-                  src={robotImage}
-                  alt="Player 2"
-                  className="w-36 h-36 md:w-48 md:h-48 object-contain drop-shadow-lg"
-                  style={{ filter: 'hue-rotate(-30deg) drop-shadow(0 0 20px rgba(239, 68, 68, 0.5))' }}
-                />
+              <div className="mb-4 relative">
+                <div
+                  className="w-36 h-36 md:w-48 md:h-48 relative flex items-center justify-center"
+                  style={{
+                    filter: 'drop-shadow(0 0 25px rgba(239, 68, 68, 0.8))',
+                  }}
+                >
+                  <img
+                    src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png"
+                    alt="Player 2"
+                    className="w-full h-full object-contain"
+                    style={{
+                      filter: 'hue-rotate(-30deg) brightness(1.1)',
+                    }}
+                  />
+                </div>
               </div>
               <div className="text-center mb-2">
                 <span className="text-sm text-red-300">P키를 눌러 입력</span>

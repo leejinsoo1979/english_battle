@@ -7,9 +7,10 @@ interface Props {
   onVersus: () => void;
   onCreateRoom: () => void;
   onAdmin: () => void;
+  onAIQuiz: () => void;
 }
 
-const IntroScreen: React.FC<Props> = ({ onStart, onVersus, onCreateRoom, onAdmin }) => {
+const IntroScreen: React.FC<Props> = ({ onStart, onVersus, onCreateRoom, onAdmin, onAIQuiz }) => {
   return (
     <div className="h-full w-full relative overflow-hidden" style={{ backgroundColor: '#fef8ed' }}>
       {/* Decorative Background Elements */}
@@ -70,6 +71,25 @@ const IntroScreen: React.FC<Props> = ({ onStart, onVersus, onCreateRoom, onAdmin
               <span className="text-white font-bold text-lg tracking-wide">혼자 하기</span>
             </div>
             <div className="absolute inset-0 border-2 border-white/20 rounded-2xl" />
+          </button>
+
+          {/* AI 퀴즈 - AI Generated Button */}
+          <button
+            onClick={onAIQuiz}
+            className="group relative w-full overflow-hidden rounded-2xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-rose-400" />
+            <div className="absolute inset-0 bg-gradient-to-r from-rose-400 to-pink-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="relative px-8 py-4 flex items-center justify-center gap-3">
+              <i className="fa-solid fa-robot text-white/90 text-lg"></i>
+              <span className="text-white font-bold text-lg tracking-wide">AI 퀴즈</span>
+              <span className="text-white/70 text-sm font-medium">(무한 생성)</span>
+            </div>
+            <div className="absolute inset-0 border-2 border-white/20 rounded-2xl" />
+            {/* AI Badge */}
+            <div className="absolute -top-1 -right-1 bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm animate-pulse">
+              AI
+            </div>
           </button>
 
           {/* 1 vs 1 대전 - Secondary Button */}

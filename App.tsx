@@ -12,6 +12,7 @@ import VersusResultScreen from './components/VersusResultScreen';
 import OnlineWaitingRoom from './components/OnlineWaitingRoom';
 import confetti from 'canvas-confetti';
 import { peerConnection, GameMessage } from './peerConnection';
+import { generateQuizWithAI, isAIConfigured } from './services/aiQuizGenerator';
 
 const STORAGE_KEY = 'phonics-master-levels';
 
@@ -38,6 +39,8 @@ const App: React.FC = () => {
 
   const [showAdmin, setShowAdmin] = useState(false);
   const [roundWinner, setRoundWinner] = useState<1 | 2 | null>(null);
+  const [isAIMode, setIsAIMode] = useState(false);
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
 
   // 온라인 게임 상태
   const [onlineRoomId, setOnlineRoomId] = useState<string | null>(null);
@@ -165,6 +168,7 @@ const App: React.FC = () => {
       alert('레벨이 없습니다. 관리자 화면에서 레벨을 추가하세요!');
       return;
     }
+    setIsAIMode(false);
     setGameState({
       currentLevelIndex: 0,
       score: 0,
@@ -173,6 +177,41 @@ const App: React.FC = () => {
       gameMode: 'single',
     });
     startTimer();
+  };
+
+  // AI 퀴즈 모드 시작
+  const startAIQuiz = async () => {
+    if (!isAIConfigured()) {
+      alert('Gemini API 키가 설정되지 않았습니다.\n.env 파일에 VITE_GEMINI_API_KEY를 추가해주세요.');
+      return;
+    }
+
+    setIsLoadingAI(true);
+    setIsAIMode(true);
+
+    try {
+      const aiLevel = await generateQuizWithAI();
+      if (aiLevel) {
+        setLevels([aiLevel]);
+        setGameState({
+          currentLevelIndex: 0,
+          score: 0,
+          timeLeft: GAME_DURATION,
+          status: 'playing',
+          gameMode: 'single',
+        });
+        startTimer();
+      } else {
+        alert('AI 퀴즈 생성에 실패했습니다. 다시 시도해주세요.');
+        setIsAIMode(false);
+      }
+    } catch (error) {
+      console.error('AI Quiz error:', error);
+      alert('AI 퀴즈 생성 중 오류가 발생했습니다.');
+      setIsAIMode(false);
+    } finally {
+      setIsLoadingAI(false);
+    }
   };
 
   const [isPlayer2Connected, setIsPlayer2Connected] = useState(false);
@@ -407,7 +446,39 @@ const App: React.FC = () => {
     });
   }, [levels.length]);
 
-  const handleLevelComplete = useCallback((earnedScore: number) => {
+  const handleLevelComplete = useCallback(async (earnedScore: number) => {
+    // AI 모드일 때는 새로운 퀴즈 생성
+    if (isAIMode) {
+      setGameState(prev => ({
+        ...prev,
+        score: prev.score + earnedScore,
+      }));
+
+      setIsLoadingAI(true);
+      try {
+        const newLevel = await generateQuizWithAI();
+        if (newLevel) {
+          setLevels([newLevel]);
+          setGameState(prev => ({
+            ...prev,
+            currentLevelIndex: 0,
+          }));
+        } else {
+          // 생성 실패 시 게임 종료
+          if (timerRef.current) clearInterval(timerRef.current);
+          setGameState(prev => ({ ...prev, status: 'game-over' }));
+        }
+      } catch (error) {
+        console.error('AI Quiz generation error:', error);
+        if (timerRef.current) clearInterval(timerRef.current);
+        setGameState(prev => ({ ...prev, status: 'game-over' }));
+      } finally {
+        setIsLoadingAI(false);
+      }
+      return;
+    }
+
+    // 일반 모드
     setGameState(prev => {
       const isLastLevel = prev.currentLevelIndex === levels.length - 1;
       if (isLastLevel) {
@@ -430,13 +501,26 @@ const App: React.FC = () => {
         currentLevelIndex: prev.currentLevelIndex + 1,
       };
     });
-  }, [levels.length]);
+  }, [levels.length, isAIMode]);
 
   const resetGame = () => {
     // 온라인 상태 초기화
     peerConnection.cleanup();
     setOnlineRoomId(null);
     setIsOnlineHost(false);
+    setIsAIMode(false);
+
+    // 기본 레벨로 복원
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        setLevels(JSON.parse(saved));
+      } catch {
+        setLevels(DEFAULT_LEVELS);
+      }
+    } else {
+      setLevels(DEFAULT_LEVELS);
+    }
 
     setGameState({
       currentLevelIndex: 0,
@@ -470,7 +554,19 @@ const App: React.FC = () => {
           onVersus={startVersusGame}
           onCreateRoom={createRoom}
           onAdmin={() => setShowAdmin(true)}
+          onAIQuiz={startAIQuiz}
         />
+      )}
+
+      {/* AI 로딩 오버레이 */}
+      {isLoadingAI && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 flex flex-col items-center gap-4 shadow-2xl">
+            <div className="w-16 h-16 border-4 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-lg font-bold text-gray-700">AI가 퀴즈를 생성 중...</p>
+            <p className="text-sm text-gray-500">잠시만 기다려주세요</p>
+          </div>
+        </div>
       )}
 
       {gameState.status === 'online-waiting' && (

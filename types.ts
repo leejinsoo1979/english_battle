@@ -32,6 +32,17 @@ export interface GameRoom {
   createdAt: number;
 }
 
+// 대전모드 게임 타입
+export type VersusGameType = 'fill-blank' | 'speed-typing' | 'scramble' | 'listening';
+
+export interface VersusGameConfig {
+  type: VersusGameType;
+  name: string;
+  description: string;
+  icon: string;
+  timeLimit: number; // 초 단위
+}
+
 export interface GameState {
   currentLevelIndex: number;
   score: number;
