@@ -58,15 +58,15 @@ const IntroScreen: React.FC<Props> = ({ onStart, onVersus, onCreateRoom, onAdmin
             onClick={onVersus}
             className="px-8 py-4 bg-teal-500 hover:bg-teal-600 text-white rounded-xl font-semibold text-lg transition-colors shadow-lg flex items-center justify-center gap-2"
           >
-            <span>1 vs 1 대전</span>
+            <span>1 vs 1 대전 (같은 기기)</span>
             <i className="fa-solid fa-users"></i>
           </button>
           <button
             onClick={onCreateRoom}
-            className="px-8 py-4 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold text-lg transition-colors shadow-lg flex items-center justify-center gap-2"
+            className="px-8 py-4 bg-purple-500 hover:bg-purple-600 text-white rounded-xl font-semibold text-lg transition-colors shadow-lg flex items-center justify-center gap-2"
           >
-            <span>친구 초대하기</span>
-            <i className="fa-solid fa-link"></i>
+            <span>온라인 대전</span>
+            <i className="fa-solid fa-globe"></i>
           </button>
         </div>
       </div>

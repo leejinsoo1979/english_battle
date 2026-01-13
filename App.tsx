@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { QuizLevel, GameState, Player, GameRoom } from './types';
+import { QuizLevel, GameState, Player } from './types';
 import { LEVELS as DEFAULT_LEVELS, GAME_DURATION } from './constants';
 import GameHeader from './components/GameHeader';
 import QuizScreen from './components/QuizScreen';
@@ -9,10 +9,9 @@ import IntroScreen from './components/IntroScreen';
 import AdminScreen from './components/AdminScreen';
 import VersusScreen from './components/VersusScreen';
 import VersusResultScreen from './components/VersusResultScreen';
-import LobbyScreen from './components/LobbyScreen';
 import OnlineWaitingRoom from './components/OnlineWaitingRoom';
 import confetti from 'canvas-confetti';
-import { OnlineRoom, subscribeToRoom, submitAnswer, updatePlayerStats, nextQuestion, endOnlineGame, startOnlineGame as firebaseStartGame } from './firebase';
+import { peerConnection, GameMessage } from './peerConnection';
 
 const STORAGE_KEY = 'phonics-master-levels';
 
@@ -42,12 +41,9 @@ const App: React.FC = () => {
 
   // 온라인 게임 상태
   const [onlineRoomId, setOnlineRoomId] = useState<string | null>(null);
-  const [onlinePlayerId, setOnlinePlayerId] = useState<string>('');
   const [isOnlineHost, setIsOnlineHost] = useState(false);
-  const [onlineRoom, setOnlineRoom] = useState<OnlineRoom | null>(null);
 
   const timerRef = useRef<number | null>(null);
-  const unsubscribeRef = useRef<(() => void) | null>(null);
 
   // URL에서 방 코드 확인
   useEffect(() => {
@@ -62,58 +58,88 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // 온라인 방 상태 구독
+  // PeerJS 메시지 핸들러 (온라인 게임 중)
   useEffect(() => {
-    if (onlineRoom?.id && gameState.status === 'versus' && gameState.gameMode === 'online') {
-      unsubscribeRef.current = subscribeToRoom(onlineRoom.id, (room) => {
-        if (room) {
-          setOnlineRoom(room);
+    if (gameState.status === 'versus' && gameState.gameMode === 'online') {
+      peerConnection.onMessage((message: GameMessage) => {
+        console.log('Game message received:', message);
 
-          // 상대방 답변 업데이트
-          if (room.players) {
+        switch (message.type) {
+          case 'answer':
+            // 상대방이 정답을 맞춤
+            const { playerId, isCorrect, score } = message.payload;
+            if (isCorrect) {
+              setGameState(prev => {
+                if (!prev.players) return prev;
+                const updatedPlayers = [...prev.players] as [Player, Player];
+                const playerIndex = playerId - 1;
+                updatedPlayers[playerIndex] = {
+                  ...updatedPlayers[playerIndex],
+                  score,
+                  isCorrect: true,
+                };
+                setRoundWinner(playerId);
+                return { ...prev, players: updatedPlayers };
+              });
+            }
+            break;
+
+          case 'health':
+            // 상대방 체력 업데이트
+            const { targetPlayerId, newHealth } = message.payload;
             setGameState(prev => {
               if (!prev.players) return prev;
-
               const updatedPlayers = [...prev.players] as [Player, Player];
+              const playerIndex = targetPlayerId - 1;
+              updatedPlayers[playerIndex] = {
+                ...updatedPlayers[playerIndex],
+                health: newHealth,
+              };
 
-              // 호스트/게스트에 따라 상대방 정보 업데이트
-              if (isOnlineHost && room.players.guest) {
-                updatedPlayers[1] = {
-                  ...updatedPlayers[1],
-                  score: room.players.guest.score,
-                  health: room.players.guest.health,
-                };
-              } else if (!isOnlineHost && room.players.host) {
-                updatedPlayers[0] = {
-                  ...updatedPlayers[0],
-                  score: room.players.host.score,
-                  health: room.players.host.health,
+              // 체력이 0이 되면 게임 종료
+              if (newHealth <= 0) {
+                const winner = targetPlayerId === 1 ? 2 : 1;
+                return {
+                  ...prev,
+                  players: updatedPlayers,
+                  status: 'versus-result',
+                  winner,
                 };
               }
 
               return { ...prev, players: updatedPlayers };
             });
-          }
+            break;
 
-          // 게임 종료 체크
-          if (room.status === 'finished' && room.winner) {
-            const winner = room.winner === 'host' ? 1 : room.winner === 'guest' ? 2 : 'draw';
+          case 'next':
+            // 다음 라운드
+            setGameState(prev => {
+              if (!prev.players) return prev;
+              const resetPlayers: [Player, Player] = [
+                { ...prev.players[0], currentInput: '', isCorrect: null },
+                { ...prev.players[1], currentInput: '', isCorrect: null },
+              ];
+              setRoundWinner(null);
+              return {
+                ...prev,
+                currentLevelIndex: message.payload.levelIndex,
+                players: resetPlayers,
+              };
+            });
+            break;
+
+          case 'end':
+            // 게임 종료
             setGameState(prev => ({
               ...prev,
               status: 'versus-result',
-              winner,
+              winner: message.payload.winner,
             }));
-          }
+            break;
         }
       });
-
-      return () => {
-        if (unsubscribeRef.current) {
-          unsubscribeRef.current();
-        }
-      };
     }
-  }, [onlineRoom?.id, gameState.status, gameState.gameMode, isOnlineHost]);
+  }, [gameState.status, gameState.gameMode]);
 
   // Save levels to localStorage
   const saveLevels = (newLevels: QuizLevel[]) => {
@@ -190,7 +216,7 @@ const App: React.FC = () => {
     }
   };
 
-  // 온라인 방 만들기 (Firebase 기반)
+  // 온라인 방 만들기 (PeerJS 기반)
   const createRoom = () => {
     if (levels.length === 0) {
       alert('레벨이 없습니다. 관리자 화면에서 레벨을 추가하세요!');
@@ -200,28 +226,17 @@ const App: React.FC = () => {
     setGameState(prev => ({ ...prev, status: 'online-waiting' }));
   };
 
-  // 온라인 게임 시작 콜백
-  const handleOnlineGameStart = useCallback((room: OnlineRoom, isHost: boolean, playerId: string) => {
-    setOnlineRoom(room);
+  // 온라인 게임 시작 콜백 (PeerJS)
+  const handleOnlineGameStart = useCallback((roomId: string, isHost: boolean, hostName: string, guestName: string) => {
     setIsOnlineHost(isHost);
-    setOnlinePlayerId(playerId);
-
-    const firstQuestion = levels[0];
-
-    // 호스트만 게임 시작 명령
-    if (isHost) {
-      firebaseStartGame(room.id, {
-        sentence: firstQuestion.sentence,
-        targetWord: firstQuestion.targetWord,
-        imageHint: firstQuestion.imageHint,
-        distractors: firstQuestion.distractors,
-      });
-    }
+    setOnlineRoomId(roomId);
 
     const initialPlayers: [Player, Player] = [
-      { id: 1, name: room.hostName, score: 0, health: 100, currentInput: '', isCorrect: null },
-      { id: 2, name: room.guestName || 'Player 2', score: 0, health: 100, currentInput: '', isCorrect: null },
+      { id: 1, name: hostName, score: 0, health: 100, currentInput: '', isCorrect: null },
+      { id: 2, name: guestName, score: 0, health: 100, currentInput: '', isCorrect: null },
     ];
+
+    setIsPlayer2Connected(true); // 온라인에서는 이미 연결됨
 
     setGameState({
       currentLevelIndex: 0,
@@ -233,12 +248,12 @@ const App: React.FC = () => {
       winner: null,
     });
     setRoundWinner(null);
-  }, [levels]);
+  }, []);
 
   // 온라인 대기실에서 돌아가기
   const handleOnlineBack = () => {
+    peerConnection.cleanup();
     setOnlineRoomId(null);
-    setOnlineRoom(null);
     setGameState(prev => ({ ...prev, status: 'intro' }));
   };
 
@@ -261,17 +276,16 @@ const App: React.FC = () => {
         updatedPlayers[playerIndex].score += 1;
         setRoundWinner(playerId);
 
-        // 온라인 게임인 경우 Firebase에 점수 업데이트
-        if (gameState.gameMode === 'online' && onlineRoom) {
-          const isHostPlayer = (isOnlineHost && playerId === 1) || (!isOnlineHost && playerId === 2);
-          if (isHostPlayer || playerId === (isOnlineHost ? 1 : 2)) {
-            updatePlayerStats(
-              onlineRoom.id,
-              isOnlineHost,
-              updatedPlayers[isOnlineHost ? 0 : 1].score,
-              updatedPlayers[isOnlineHost ? 0 : 1].health
-            );
-          }
+        // 온라인 게임인 경우 PeerJS로 상대방에게 전송
+        if (prev.gameMode === 'online') {
+          peerConnection.send({
+            type: 'answer',
+            payload: {
+              playerId,
+              isCorrect: true,
+              score: updatedPlayers[playerIndex].score,
+            }
+          });
         }
       }
 
@@ -280,7 +294,7 @@ const App: React.FC = () => {
         players: updatedPlayers,
       };
     });
-  }, [levels, gameState.currentLevelIndex, gameState.gameMode, onlineRoom, isOnlineHost]);
+  }, [levels, gameState.currentLevelIndex]);
 
   // 체력 업데이트 핸들러
   const handleHealthUpdate = useCallback((playerId: 1 | 2, damage: number) => {
@@ -295,29 +309,27 @@ const App: React.FC = () => {
         health: newHealth,
       };
 
-      // 온라인 게임인 경우 Firebase에 체력 업데이트
-      if (prev.gameMode === 'online' && onlineRoom) {
-        // 내 체력이 깎인 경우만 업데이트
-        const isMyHealth = (isOnlineHost && playerId === 1) || (!isOnlineHost && playerId === 2);
-        if (!isMyHealth) {
-          // 상대방 체력 = 내가 공격한 것
-          updatePlayerStats(
-            onlineRoom.id,
-            isOnlineHost,
-            updatedPlayers[isOnlineHost ? 0 : 1].score,
-            updatedPlayers[isOnlineHost ? 0 : 1].health
-          );
-        }
+      // 온라인 게임인 경우 PeerJS로 상대방에게 체력 업데이트 전송
+      if (prev.gameMode === 'online') {
+        peerConnection.send({
+          type: 'health',
+          payload: {
+            targetPlayerId: playerId,
+            newHealth,
+          }
+        });
       }
 
       // 체력이 0이 되면 게임 종료
       if (newHealth <= 0) {
         const winner = playerId === 1 ? 2 : 1;
 
-        // 온라인 게임인 경우 Firebase에 게임 종료 알림
-        if (prev.gameMode === 'online' && onlineRoom) {
-          const firebaseWinner = winner === 1 ? 'host' : 'guest';
-          endOnlineGame(onlineRoom.id, firebaseWinner);
+        // 온라인 게임인 경우 PeerJS로 게임 종료 알림
+        if (prev.gameMode === 'online') {
+          peerConnection.send({
+            type: 'end',
+            payload: { winner }
+          });
         }
 
         return {
@@ -333,7 +345,7 @@ const App: React.FC = () => {
         players: updatedPlayers,
       };
     });
-  }, [onlineRoom, isOnlineHost]);
+  }, []);
 
   const handleVersusNextLevel = useCallback(() => {
     setGameState(prev => {
@@ -355,10 +367,12 @@ const App: React.FC = () => {
         else if (player2Health > player1Health) winner = 2;
         else winner = 'draw';
 
-        // 온라인 게임인 경우 Firebase에 게임 종료 알림
-        if (prev.gameMode === 'online' && onlineRoom) {
-          const firebaseWinner = winner === 1 ? 'host' : winner === 2 ? 'guest' : 'draw';
-          endOnlineGame(onlineRoom.id, firebaseWinner);
+        // 온라인 게임인 경우 PeerJS로 게임 종료 알림
+        if (prev.gameMode === 'online') {
+          peerConnection.send({
+            type: 'end',
+            payload: { winner }
+          });
         }
 
         return {
@@ -377,14 +391,11 @@ const App: React.FC = () => {
 
       setRoundWinner(null);
 
-      // 온라인 게임인 경우 다음 문제 Firebase에 업데이트 (호스트만)
-      if (prev.gameMode === 'online' && onlineRoom && isOnlineHost) {
-        const nextLevel = levels[nextLevelIndex];
-        nextQuestion(onlineRoom.id, nextLevelIndex, {
-          sentence: nextLevel.sentence,
-          targetWord: nextLevel.targetWord,
-          imageHint: nextLevel.imageHint,
-          distractors: nextLevel.distractors,
+      // 온라인 게임인 경우 PeerJS로 다음 라운드 알림
+      if (prev.gameMode === 'online') {
+        peerConnection.send({
+          type: 'next',
+          payload: { levelIndex: nextLevelIndex }
         });
       }
 
@@ -394,7 +405,7 @@ const App: React.FC = () => {
         players: resetPlayers,
       };
     });
-  }, [levels, onlineRoom, isOnlineHost]);
+  }, [levels.length]);
 
   const handleLevelComplete = useCallback((earnedScore: number) => {
     setGameState(prev => {
@@ -423,15 +434,9 @@ const App: React.FC = () => {
 
   const resetGame = () => {
     // 온라인 상태 초기화
-    setOnlineRoom(null);
+    peerConnection.cleanup();
     setOnlineRoomId(null);
-    setOnlinePlayerId('');
     setIsOnlineHost(false);
-
-    if (unsubscribeRef.current) {
-      unsubscribeRef.current();
-      unsubscribeRef.current = null;
-    }
 
     setGameState({
       currentLevelIndex: 0,

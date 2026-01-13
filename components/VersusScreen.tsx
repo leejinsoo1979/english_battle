@@ -2,6 +2,121 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { QuizLevel, Player } from '../types';
 import robotImage from './images/robot.png';
+import { playSound } from '../utils/sounds';
+
+// 라운드 시작 효과 컴포넌트
+const RoundStartEffect: React.FC<{ round: number; onComplete: () => void }> = ({ round, onComplete }) => {
+  const [phase, setPhase] = useState<'round' | 'fight' | 'done'>('round');
+
+  useEffect(() => {
+    playSound('round', 0.5);
+
+    const fightTimer = setTimeout(() => {
+      setPhase('fight');
+      playSound('fight', 0.6);
+    }, 1000);
+
+    const doneTimer = setTimeout(() => {
+      setPhase('done');
+      onComplete();
+    }, 2200);
+
+    return () => {
+      clearTimeout(fightTimer);
+      clearTimeout(doneTimer);
+    };
+  }, [onComplete]);
+
+  if (phase === 'done') return null;
+
+  return (
+    <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
+      {/* 배경 오버레이 */}
+      <div
+        className="absolute inset-0 bg-black/60"
+        style={{ animation: 'fadeIn 0.3s ease-out' }}
+      />
+
+      {/* 라운드 텍스트 */}
+      {phase === 'round' && (
+        <div
+          className="relative text-center"
+          style={{ animation: 'roundZoom 1s ease-out forwards' }}
+        >
+          <div className="text-6xl md:text-8xl font-fredoka text-white drop-shadow-2xl">
+            ROUND
+          </div>
+          <div
+            className="text-8xl md:text-[150px] font-fredoka text-yellow-400 leading-none"
+            style={{
+              textShadow: '0 0 40px rgba(250, 204, 21, 0.8), 0 0 80px rgba(250, 204, 21, 0.5)',
+              animation: 'numberPulse 0.5s ease-in-out infinite'
+            }}
+          >
+            {round}
+          </div>
+        </div>
+      )}
+
+      {/* FIGHT 텍스트 */}
+      {phase === 'fight' && (
+        <div
+          className="relative"
+          style={{ animation: 'fightSlam 0.6s ease-out forwards' }}
+        >
+          <div
+            className="text-7xl md:text-[120px] font-fredoka text-red-500 tracking-wider"
+            style={{
+              textShadow: '0 0 30px rgba(239, 68, 68, 0.8), 0 0 60px rgba(239, 68, 68, 0.5), 4px 4px 0 #7f1d1d',
+              WebkitTextStroke: '2px #991b1b'
+            }}
+          >
+            FIGHT!
+          </div>
+          {/* 충격파 효과 */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute w-32 h-32 border-4 border-yellow-400 rounded-full"
+                style={{
+                  animation: `shockwaveExpand 0.8s ease-out ${i * 0.15}s forwards`,
+                  opacity: 0
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes roundZoom {
+          0% { transform: scale(0.3); opacity: 0; }
+          50% { transform: scale(1.1); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes numberPulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        @keyframes fightSlam {
+          0% { transform: scale(3) rotate(-10deg); opacity: 0; }
+          60% { transform: scale(0.9) rotate(2deg); opacity: 1; }
+          80% { transform: scale(1.1) rotate(-1deg); }
+          100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        @keyframes shockwaveExpand {
+          0% { transform: scale(0.5); opacity: 1; }
+          100% { transform: scale(8); opacity: 0; }
+        }
+      `}</style>
+    </div>
+  );
+};
 
 // 우주 배경 컴포넌트
 const SpaceBackground: React.FC = () => {
@@ -174,6 +289,196 @@ const SpaceBackground: React.FC = () => {
         @keyframes twinkle {
           0%, 100% { opacity: 0.3; transform: scale(1); }
           50% { opacity: 1; transform: scale(1.2); }
+        }
+      `}</style>
+    </div>
+  );
+};
+
+// 번개 공격 효과 컴포넌트
+const LightningEffect: React.FC<{ side: 'left' | 'right'; onComplete: () => void }> = ({ side, onComplete }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // 캔버스 크기 설정 (해당 영역만)
+    canvas.width = window.innerWidth * 0.33;
+    canvas.height = window.innerHeight;
+
+    // 번개 사운드
+    playSound('critical', 0.6);
+
+    let frame = 0;
+    const maxFrames = 45;
+
+    // 번개 경로 생성
+    const generateLightningPath = (startX: number, startY: number, endY: number) => {
+      const points: { x: number; y: number }[] = [];
+      let x = startX;
+      let y = startY;
+      points.push({ x, y });
+
+      while (y < endY) {
+        y += 15 + Math.random() * 25;
+        x += (Math.random() - 0.5) * 80;
+        x = Math.max(20, Math.min(canvas.width - 20, x));
+        points.push({ x, y });
+      }
+
+      return points;
+    };
+
+    // 메인 번개들
+    const lightnings = [
+      generateLightningPath(canvas.width * 0.3, -20, canvas.height + 20),
+      generateLightningPath(canvas.width * 0.5, -20, canvas.height + 20),
+      generateLightningPath(canvas.width * 0.7, -20, canvas.height + 20),
+    ];
+
+    const drawLightning = (points: { x: number; y: number }[], width: number, color: string, glow: number) => {
+      if (points.length < 2) return;
+
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.shadowColor = color;
+      ctx.shadowBlur = glow;
+
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+
+      ctx.stroke();
+      ctx.restore();
+
+      // 분기 번개
+      points.forEach((point, i) => {
+        if (i > 0 && i < points.length - 1 && Math.random() > 0.6) {
+          const branchLength = 30 + Math.random() * 50;
+          const branchAngle = (Math.random() - 0.5) * Math.PI * 0.8;
+          const endX = point.x + Math.cos(branchAngle) * branchLength;
+          const endY = point.y + Math.sin(branchAngle) * branchLength + 20;
+
+          ctx.save();
+          ctx.strokeStyle = color;
+          ctx.lineWidth = width * 0.5;
+          ctx.shadowColor = color;
+          ctx.shadowBlur = glow * 0.5;
+
+          ctx.beginPath();
+          ctx.moveTo(point.x, point.y);
+          ctx.lineTo(endX, endY);
+          ctx.stroke();
+          ctx.restore();
+        }
+      });
+    };
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 배경 플래시
+      const flashIntensity = Math.max(0, 1 - frame / 15);
+      if (flashIntensity > 0) {
+        ctx.fillStyle = `rgba(255, 255, 255, ${flashIntensity * 0.4})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      // 번개 그리기 (페이드아웃)
+      const alpha = Math.max(0, 1 - frame / maxFrames);
+      if (alpha > 0) {
+        lightnings.forEach((lightning, i) => {
+          // 약간씩 다른 타이밍
+          const delay = i * 3;
+          if (frame >= delay) {
+            const localAlpha = Math.max(0, 1 - (frame - delay) / (maxFrames - delay));
+
+            // 글로우 레이어
+            drawLightning(lightning, 20, `rgba(100, 180, 255, ${localAlpha * 0.3})`, 40);
+            // 중간 레이어
+            drawLightning(lightning, 8, `rgba(150, 200, 255, ${localAlpha * 0.6})`, 20);
+            // 코어
+            drawLightning(lightning, 3, `rgba(255, 255, 255, ${localAlpha})`, 10);
+          }
+        });
+
+        // 전기 스파크 파티클
+        if (frame < 20) {
+          for (let i = 0; i < 5; i++) {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height;
+            const size = Math.random() * 4 + 2;
+
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(200, 230, 255, ${Math.random() * alpha})`;
+            ctx.fill();
+          }
+        }
+      }
+
+      frame++;
+      if (frame < maxFrames) {
+        requestAnimationFrame(animate);
+      } else {
+        onComplete();
+      }
+    };
+
+    animate();
+  }, [onComplete]);
+
+  return (
+    <div
+      className="absolute top-0 bottom-0 z-40 pointer-events-none"
+      style={{
+        left: side === 'left' ? 0 : 'auto',
+        right: side === 'right' ? 0 : 'auto',
+        width: '33.33%',
+      }}
+    >
+      {/* 번개 배경 효과 */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: 'radial-gradient(ellipse at center, rgba(100, 180, 255, 0.3) 0%, transparent 70%)',
+          animation: 'lightningFlash 0.1s ease-out 3',
+        }}
+      />
+
+      {/* 번개 캔버스 */}
+      <canvas ref={canvasRef} className="absolute inset-0" />
+
+      {/* 데미지 텍스트 */}
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl font-fredoka text-yellow-300"
+        style={{
+          textShadow: '0 0 20px rgba(255, 255, 0, 0.8), 0 0 40px rgba(255, 200, 0, 0.6), 2px 2px 0 #b45309',
+          animation: 'damageNumber 0.8s ease-out forwards',
+        }}
+      >
+        -20
+      </div>
+
+      <style>{`
+        @keyframes lightningFlash {
+          0%, 100% { opacity: 0; }
+          50% { opacity: 1; }
+        }
+        @keyframes damageNumber {
+          0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+          30% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+          100% { transform: translate(-50%, -80%) scale(1); opacity: 0; }
         }
       `}</style>
     </div>
@@ -623,8 +928,19 @@ const VersusScreen: React.FC<Props> = ({
   const [attackEffect, setAttackEffect] = useState<'left' | 'right' | null>(null);
   const [showDamage, setShowDamage] = useState<1 | 2 | null>(null);
   const [screenShake, setScreenShake] = useState(false);
+  const [showRoundStart, setShowRoundStart] = useState(true);
+  const [lightningTarget, setLightningTarget] = useState<'left' | 'right' | null>(null);
   const player1InputRef = useRef<HTMLInputElement>(null);
   const player2InputRef = useRef<HTMLInputElement>(null);
+  const prevRoundRef = useRef(currentRound);
+
+  // 라운드 변경 시 라운드 시작 효과 표시
+  useEffect(() => {
+    if (prevRoundRef.current !== currentRound) {
+      setShowRoundStart(true);
+      prevRoundRef.current = currentRound;
+    }
+  }, [currentRound]);
 
   useEffect(() => {
     setPlayer1Input('');
@@ -640,8 +956,10 @@ const VersusScreen: React.FC<Props> = ({
       setAttackEffect(attackDirection);
       setShowDamage(roundWinner === 1 ? 2 : 1);
 
-      // 화면 흔들림 효과 (임팩트 시점에)
+      // 번개 효과 - 공격당한 쪽에 표시 (임팩트 시점에)
       setTimeout(() => {
+        const targetSide = roundWinner === 1 ? 'right' : 'left';
+        setLightningTarget(targetSide);
         setScreenShake(true);
         setTimeout(() => setScreenShake(false), 400);
       }, 500);
@@ -654,6 +972,7 @@ const VersusScreen: React.FC<Props> = ({
 
       const timer = setTimeout(() => {
         setShowDamage(null);
+        setLightningTarget(null);
         onNextLevel();
       }, 2500);
       return () => clearTimeout(timer);
@@ -704,11 +1023,27 @@ const VersusScreen: React.FC<Props> = ({
       {/* 우주 배경 */}
       <SpaceBackground />
 
+      {/* 라운드 시작 효과 */}
+      {showRoundStart && (
+        <RoundStartEffect
+          round={currentRound}
+          onComplete={() => setShowRoundStart(false)}
+        />
+      )}
+
       {/* 공격 이펙트 */}
       {attackEffect && (
         <AttackEffect
           direction={attackEffect}
           onComplete={() => setAttackEffect(null)}
+        />
+      )}
+
+      {/* 번개 효과 - 공격당한 쪽 */}
+      {lightningTarget && (
+        <LightningEffect
+          side={lightningTarget}
+          onComplete={() => setLightningTarget(null)}
         />
       )}
 
