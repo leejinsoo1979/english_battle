@@ -87,58 +87,263 @@ const PLAYER_COLORS = [
   { primary: '#F59E0B', glow: 'rgba(245, 158, 11, 0.6)', name: 'yellow' },
 ];
 
+// TV 퀴즈쇼 무대 배경
+const QuizShowStage: React.FC = () => {
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {/* 무대 바닥 - 반사되는 광택 바닥 */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-[35%]"
+        style={{
+          background: 'linear-gradient(180deg, transparent 0%, rgba(20, 20, 40, 0.9) 20%, rgba(10, 10, 30, 1) 100%)',
+        }}
+      >
+        {/* 바닥 반사 효과 */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(180deg, rgba(100, 100, 255, 0.1) 0%, transparent 50%)',
+          }}
+        />
+        {/* 바닥 그리드 라인 */}
+        <div className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: `
+              linear-gradient(90deg, rgba(100, 150, 255, 0.3) 1px, transparent 1px),
+              linear-gradient(0deg, rgba(100, 150, 255, 0.3) 1px, transparent 1px)
+            `,
+            backgroundSize: '60px 60px',
+            transform: 'perspective(500px) rotateX(60deg)',
+            transformOrigin: 'center top',
+          }}
+        />
+      </div>
+
+      {/* 천장 트러스 구조 */}
+      <div className="absolute top-0 left-0 right-0 h-16 flex justify-between px-8">
+        {[...Array(8)].map((_, i) => (
+          <div key={i} className="flex flex-col items-center">
+            <div className="w-3 h-16 bg-gradient-to-b from-gray-600 to-gray-800 rounded-b" />
+            <motion.div
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 2, repeat: Infinity, delay: i * 0.2 }}
+              className="w-6 h-6 rounded-full mt-1"
+              style={{
+                background: `radial-gradient(circle, ${['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316'][i]} 0%, transparent 70%)`,
+                boxShadow: `0 0 20px ${['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316'][i]}`,
+              }}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* 좌우 LED 패널 - 왼쪽 */}
+      <div className="absolute left-0 top-20 bottom-40 w-12 flex flex-col gap-1 p-1">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={`left-${i}`}
+            animate={{
+              backgroundColor: [
+                'rgba(59, 130, 246, 0.8)',
+                'rgba(139, 92, 246, 0.8)',
+                'rgba(236, 72, 153, 0.8)',
+                'rgba(59, 130, 246, 0.8)',
+              ],
+            }}
+            transition={{ duration: 3, repeat: Infinity, delay: i * 0.1 }}
+            className="flex-1 rounded-sm"
+            style={{ boxShadow: '0 0 10px currentColor' }}
+          />
+        ))}
+      </div>
+
+      {/* 좌우 LED 패널 - 오른쪽 */}
+      <div className="absolute right-0 top-20 bottom-40 w-12 flex flex-col gap-1 p-1">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={`right-${i}`}
+            animate={{
+              backgroundColor: [
+                'rgba(236, 72, 153, 0.8)',
+                'rgba(139, 92, 246, 0.8)',
+                'rgba(59, 130, 246, 0.8)',
+                'rgba(236, 72, 153, 0.8)',
+              ],
+            }}
+            transition={{ duration: 3, repeat: Infinity, delay: i * 0.1 }}
+            className="flex-1 rounded-sm"
+            style={{ boxShadow: '0 0 10px currentColor' }}
+          />
+        ))}
+      </div>
+
+      {/* 메인 스포트라이트 빔 */}
+      {[...Array(5)].map((_, i) => (
+        <motion.div
+          key={`spotlight-${i}`}
+          animate={{
+            opacity: [0.1, 0.3, 0.1],
+            rotate: [i * 15 - 30, i * 15 - 25, i * 15 - 30],
+          }}
+          transition={{ duration: 4, repeat: Infinity, delay: i * 0.5 }}
+          className="absolute top-0 left-1/2 w-32 origin-top"
+          style={{
+            height: '100%',
+            background: `linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 30%, transparent 60%)`,
+            clipPath: 'polygon(40% 0%, 60% 0%, 100% 100%, 0% 100%)',
+            transform: `translateX(-50%) rotate(${i * 15 - 30}deg)`,
+          }}
+        />
+      ))}
+
+      {/* 원형 LED 링 장식 */}
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] opacity-20"
+      >
+        <div className="absolute inset-0 rounded-full border-4 border-dashed border-blue-500/30" />
+        <div className="absolute inset-8 rounded-full border-2 border-purple-500/30" />
+        <div className="absolute inset-16 rounded-full border border-pink-500/30" />
+      </motion.div>
+
+      {/* 하단 LED 스트립 */}
+      <div className="absolute bottom-32 left-16 right-16 h-2 flex gap-1">
+        {[...Array(40)].map((_, i) => (
+          <motion.div
+            key={`bottom-led-${i}`}
+            animate={{
+              opacity: [0.3, 1, 0.3],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.05 }}
+            className="flex-1 rounded-full bg-gradient-to-t from-cyan-500 to-blue-500"
+            style={{ boxShadow: '0 0 8px rgba(6, 182, 212, 0.8)' }}
+          />
+        ))}
+      </div>
+
+      {/* 움직이는 레이저 빔 */}
+      <motion.div
+        animate={{ x: ['-100%', '200%'] }}
+        transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+        className="absolute top-1/3 w-1 h-[2px]"
+        style={{
+          background: 'linear-gradient(90deg, transparent, #00ff88, #00ff88, transparent)',
+          boxShadow: '0 0 20px #00ff88, 0 0 40px #00ff88',
+          width: '200px',
+        }}
+      />
+      <motion.div
+        animate={{ x: ['200%', '-100%'] }}
+        transition={{ duration: 5, repeat: Infinity, ease: 'linear', delay: 2 }}
+        className="absolute top-2/3 w-1 h-[2px]"
+        style={{
+          background: 'linear-gradient(90deg, transparent, #ff0088, #ff0088, transparent)',
+          boxShadow: '0 0 20px #ff0088, 0 0 40px #ff0088',
+          width: '200px',
+        }}
+      />
+    </div>
+  );
+};
+
 // 스튜디오 조명 효과
 const StudioLights: React.FC = () => {
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      {/* 메인 스포트라이트 */}
+      {/* 메인 센터 스포트라이트 */}
       <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px]"
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[800px]"
         style={{
-          background: 'conic-gradient(from 180deg at 50% 0%, transparent 40%, rgba(255,255,255,0.1) 50%, transparent 60%)',
-          filter: 'blur(20px)',
+          background: 'conic-gradient(from 180deg at 50% 0%, transparent 35%, rgba(255,255,255,0.15) 50%, transparent 65%)',
+          filter: 'blur(30px)',
         }}
       />
 
-      {/* 좌측 컬러 라이트 */}
+      {/* 좌측 무빙 라이트 */}
       <motion.div
         animate={{
-          opacity: [0.3, 0.6, 0.3],
-          scale: [1, 1.1, 1],
+          opacity: [0.4, 0.8, 0.4],
+          scale: [1, 1.3, 1],
+          x: [-20, 20, -20],
+        }}
+        transition={{ duration: 4, repeat: Infinity }}
+        className="absolute -left-10 top-1/4 w-96 h-96 rounded-full"
+        style={{
+          background: 'radial-gradient(circle, rgba(59, 130, 246, 0.5) 0%, rgba(139, 92, 246, 0.3) 40%, transparent 70%)',
+          filter: 'blur(60px)',
+        }}
+      />
+
+      {/* 우측 무빙 라이트 */}
+      <motion.div
+        animate={{
+          opacity: [0.4, 0.8, 0.4],
+          scale: [1, 1.3, 1],
+          x: [20, -20, 20],
+        }}
+        transition={{ duration: 4, repeat: Infinity, delay: 2 }}
+        className="absolute -right-10 top-1/4 w-96 h-96 rounded-full"
+        style={{
+          background: 'radial-gradient(circle, rgba(236, 72, 153, 0.5) 0%, rgba(239, 68, 68, 0.3) 40%, transparent 70%)',
+          filter: 'blur(60px)',
+        }}
+      />
+
+      {/* 상단 앰비언트 라이트 */}
+      <motion.div
+        animate={{
+          opacity: [0.2, 0.4, 0.2],
         }}
         transition={{ duration: 3, repeat: Infinity }}
-        className="absolute -left-20 top-1/4 w-80 h-80 rounded-full"
+        className="absolute top-0 left-0 right-0 h-40"
         style={{
-          background: 'radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, transparent 70%)',
-          filter: 'blur(40px)',
+          background: 'linear-gradient(180deg, rgba(139, 92, 246, 0.4) 0%, transparent 100%)',
         }}
       />
 
-      {/* 우측 컬러 라이트 */}
+      {/* 무빙 스캔 라이트 1 */}
       <motion.div
-        animate={{
-          opacity: [0.3, 0.6, 0.3],
-          scale: [1, 1.1, 1],
-        }}
-        transition={{ duration: 3, repeat: Infinity, delay: 1.5 }}
-        className="absolute -right-20 top-1/4 w-80 h-80 rounded-full"
+        animate={{ x: ['-100%', '200%'] }}
+        transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+        className="absolute top-0 w-60 h-full"
         style={{
-          background: 'radial-gradient(circle, rgba(239, 68, 68, 0.4) 0%, transparent 70%)',
-          filter: 'blur(40px)',
+          background: 'linear-gradient(90deg, transparent, rgba(100, 200, 255, 0.08), transparent)',
         }}
       />
 
-      {/* 움직이는 스캔 라이트 */}
+      {/* 무빙 스캔 라이트 2 */}
       <motion.div
-        animate={{
-          x: ['-100%', '200%'],
-        }}
+        animate={{ x: ['200%', '-100%'] }}
         transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
         className="absolute top-0 w-40 h-full"
         style={{
-          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)',
+          background: 'linear-gradient(90deg, transparent, rgba(255, 100, 200, 0.06), transparent)',
         }}
       />
+
+      {/* 깜빡이는 스타 효과 */}
+      {[...Array(15)].map((_, i) => (
+        <motion.div
+          key={`star-${i}`}
+          animate={{
+            opacity: [0, 1, 0],
+            scale: [0.5, 1, 0.5],
+          }}
+          transition={{
+            duration: 2 + Math.random() * 2,
+            repeat: Infinity,
+            delay: Math.random() * 3,
+          }}
+          className="absolute w-1 h-1 bg-white rounded-full"
+          style={{
+            left: `${10 + Math.random() * 80}%`,
+            top: `${5 + Math.random() * 30}%`,
+            boxShadow: '0 0 10px white, 0 0 20px white',
+          }}
+        />
+      ))}
     </div>
   );
 };
@@ -1169,6 +1374,7 @@ const QuizShowScreen: React.FC<Props> = ({ onExit, playerCount = 4 }) => {
       />
       {/* 배경 효과 */}
       <LEDBackground isCorrect={correctOption !== null && selectedOption === correctOption} isWrong={correctOption !== null && selectedOption !== correctOption} />
+      <QuizShowStage />
       <StudioLights />
 
       {/* 인트로 화면 */}
