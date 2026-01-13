@@ -93,9 +93,9 @@ Example response:
 
     // Generate image URL using Pollinations.ai
     const imagePrompt = encodeURIComponent(
-      `cute cartoon ${generated.targetWord} for children education, simple colorful illustration, white background`
+      `high quality photo of a ${generated.targetWord}, realistic, clear, no text, no words, no letters, no watermark, professional photography`
     );
-    const imageUrl = `https://image.pollinations.ai/prompt/${imagePrompt}?width=512&height=512&nologo=true`;
+    const imageUrl = `https://image.pollinations.ai/prompt/${imagePrompt}?width=512&height=512&nologo=true&seed=${Date.now()}`;
 
     // Find indices for phonics rule highlighting
     const indices: number[] = [];

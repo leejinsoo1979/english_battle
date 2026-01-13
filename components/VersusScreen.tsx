@@ -1139,166 +1139,201 @@ const VersusScreen: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Main Content - 3 Columns */}
+      {/* Main Content - 게임 타입에 따른 렌더링 */}
       <div className="relative z-10 flex-1 flex">
-        {/* Player 1 Area (Left) */}
-        <div className="flex-1 flex flex-col items-center justify-center p-4 bg-transparent">
-          {/* Player 1 Character */}
-          <div className="mb-4 relative">
-            <div
-              className="w-36 h-36 md:w-48 md:h-48 relative flex items-center justify-center"
-              style={{
-                filter: 'drop-shadow(0 0 25px rgba(59, 130, 246, 0.8))',
-              }}
-            >
-              <img
-                src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png"
-                alt="Player 1"
-                className="w-full h-full object-contain"
-                style={{
-                  filter: 'hue-rotate(200deg) brightness(1.1)',
-                }}
-              />
-            </div>
-          </div>
-          <div className="text-center mb-2">
-            <span className="text-sm text-blue-300">Q키를 눌러 입력</span>
-          </div>
-          <form onSubmit={handlePlayer1Submit} className="w-full max-w-xs">
-            <input
-              ref={player1InputRef}
-              type="text"
-              value={player1Input}
-              onChange={(e) => setPlayer1Input(e.target.value)}
-              placeholder="단어를 입력하세요"
-              disabled={showResult}
-              className="w-full px-4 py-3 text-xl text-center border-2 border-blue-500 rounded-xl focus:border-blue-400 focus:outline-none disabled:bg-gray-700 bg-gray-800 text-white placeholder-gray-500"
-              autoComplete="off"
-            />
-            <button
-              type="submit"
-              disabled={showResult || !player1Input.trim()}
-              className="w-full mt-3 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white rounded-xl font-semibold transition-colors shadow-lg shadow-blue-500/30"
-            >
-              제출 (Enter)
-            </button>
-          </form>
-          {showResult && players[0].isCorrect !== null && (
-            <div className={`mt-3 text-2xl font-bold ${players[0].isCorrect ? 'text-green-400' : 'text-red-400'}`}>
-              {players[0].isCorrect ? '정답! ✓' : '오답 ✗'}
-            </div>
-          )}
-        </div>
+        {/* 스피드 타이핑 게임 */}
+        {currentGameType === 'speed-typing' && (
+          <SpeedTypingGame
+            level={level}
+            onPlayer1Answer={(answer) => onAnswer(1, answer)}
+            onPlayer2Answer={(answer) => onAnswer(2, answer)}
+            disabled={showResult}
+          />
+        )}
 
-        {/* Center Area - Image & Word */}
-        <div className="flex-1 flex flex-col items-center justify-center p-6 border-x border-gray-700/30 bg-black/20 backdrop-blur-sm">
-          {/* Image */}
-          <div className="w-48 h-48 md:w-64 md:h-64 rounded-2xl overflow-hidden shadow-2xl mb-6 ring-4 ring-yellow-500/30">
-            <img
-              src={level.imageHint}
-              alt="hint"
-              className="w-full h-full object-cover"
-            />
-          </div>
+        {/* 단어 스크램블 게임 */}
+        {currentGameType === 'scramble' && (
+          <ScrambleGame
+            level={level}
+            onPlayer1Answer={(answer) => onAnswer(1, answer)}
+            onPlayer2Answer={(answer) => onAnswer(2, answer)}
+            disabled={showResult}
+          />
+        )}
 
-          {/* Word Display */}
-          <div className="text-center">
-            <p className="text-xl text-gray-300 mb-2">{level.sentence}</p>
-            <div className="flex justify-center gap-2">
-              {level.targetWord.split('').map((_, index) => (
-                <div
-                  key={index}
-                  className="w-10 h-12 border-b-4 border-yellow-500 flex items-center justify-center"
-                >
-                  <span className="text-2xl text-gray-500">_</span>
-                </div>
-              ))}
-            </div>
-            <p className="mt-4 text-gray-500 text-sm">
-              {level.targetWord.length}글자
-            </p>
-          </div>
+        {/* 듣고 맞추기 게임 */}
+        {currentGameType === 'listening' && (
+          <ListeningGame
+            level={level}
+            onPlayer1Answer={(answer) => onAnswer(1, answer)}
+            onPlayer2Answer={(answer) => onAnswer(2, answer)}
+            disabled={showResult}
+          />
+        )}
 
-          {/* Round Winner Display */}
-          {showResult && roundWinner && (
-            <div className="mt-6 p-4 bg-yellow-500/20 border border-yellow-500/50 rounded-xl">
-              <span className="text-xl font-bold text-yellow-400">
-                🎉 {roundWinner === 1 ? players[0].name : players[1].name} 승리!
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Player 2 Area (Right) */}
-        <div className="flex-1 flex flex-col items-center justify-center p-4 bg-transparent">
-          {!isPlayer2Connected ? (
-            /* 초대 대기 화면 */
-            <div className="flex flex-col items-center justify-center text-center">
-              <div className="w-36 h-36 md:w-48 md:h-48 rounded-full bg-gray-800 flex items-center justify-center mb-4 border-4 border-dashed border-gray-600">
-                <i className="fa-solid fa-user-plus text-4xl md:text-5xl text-gray-500"></i>
-              </div>
-              <p className="text-gray-400 mb-6 text-lg">Player 2 참가 대기중</p>
-
-              {/* 온라인 초대 버튼 */}
-              <button
-                onClick={onInvite}
-                className="w-full max-w-xs px-6 py-4 bg-teal-600 hover:bg-teal-500 text-white rounded-xl font-semibold transition-colors shadow-lg shadow-teal-500/30 flex items-center justify-center gap-2"
-              >
-                <i className="fa-solid fa-share-nodes"></i>
-                친구 초대하기
-              </button>
-            </div>
-          ) : (
-            /* 기존 Player 2 입력 화면 */
-            <>
-              {/* Player 2 Character */}
+        {/* 빈칸 채우기 (기본) */}
+        {currentGameType === 'fill-blank' && (
+          <>
+            {/* Player 1 Area (Left) */}
+            <div className="flex-1 flex flex-col items-center justify-center p-4 bg-transparent">
+              {/* Player 1 Character */}
               <div className="mb-4 relative">
                 <div
                   className="w-36 h-36 md:w-48 md:h-48 relative flex items-center justify-center"
                   style={{
-                    filter: 'drop-shadow(0 0 25px rgba(239, 68, 68, 0.8))',
+                    filter: 'drop-shadow(0 0 25px rgba(59, 130, 246, 0.8))',
                   }}
                 >
                   <img
                     src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png"
-                    alt="Player 2"
+                    alt="Player 1"
                     className="w-full h-full object-contain"
                     style={{
-                      filter: 'hue-rotate(-30deg) brightness(1.1)',
+                      filter: 'hue-rotate(200deg) brightness(1.1)',
                     }}
                   />
                 </div>
               </div>
               <div className="text-center mb-2">
-                <span className="text-sm text-red-300">P키를 눌러 입력</span>
+                <span className="text-sm text-blue-300">Q키를 눌러 입력</span>
               </div>
-              <form onSubmit={handlePlayer2Submit} className="w-full max-w-xs">
+              <form onSubmit={handlePlayer1Submit} className="w-full max-w-xs">
                 <input
-                  ref={player2InputRef}
+                  ref={player1InputRef}
                   type="text"
-                  value={player2Input}
-                  onChange={(e) => setPlayer2Input(e.target.value)}
+                  value={player1Input}
+                  onChange={(e) => setPlayer1Input(e.target.value)}
                   placeholder="단어를 입력하세요"
                   disabled={showResult}
-                  className="w-full px-4 py-3 text-xl text-center border-2 border-red-500 rounded-xl focus:border-red-400 focus:outline-none disabled:bg-gray-700 bg-gray-800 text-white placeholder-gray-500"
+                  className="w-full px-4 py-3 text-xl text-center border-2 border-blue-500 rounded-xl focus:border-blue-400 focus:outline-none disabled:bg-gray-700 bg-gray-800 text-white placeholder-gray-500"
                   autoComplete="off"
                 />
                 <button
                   type="submit"
-                  disabled={showResult || !player2Input.trim()}
-                  className="w-full mt-3 py-3 bg-red-600 hover:bg-red-500 disabled:bg-gray-600 text-white rounded-xl font-semibold transition-colors shadow-lg shadow-red-500/30"
+                  disabled={showResult || !player1Input.trim()}
+                  className="w-full mt-3 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white rounded-xl font-semibold transition-colors shadow-lg shadow-blue-500/30"
                 >
                   제출 (Enter)
                 </button>
               </form>
-              {showResult && players[1].isCorrect !== null && (
-                <div className={`mt-3 text-2xl font-bold ${players[1].isCorrect ? 'text-green-400' : 'text-red-400'}`}>
-                  {players[1].isCorrect ? '정답! ✓' : '오답 ✗'}
+              {showResult && players[0].isCorrect !== null && (
+                <div className={`mt-3 text-2xl font-bold ${players[0].isCorrect ? 'text-green-400' : 'text-red-400'}`}>
+                  {players[0].isCorrect ? '정답! ✓' : '오답 ✗'}
                 </div>
               )}
-            </>
-          )}
-        </div>
+            </div>
+
+            {/* Center Area - Image & Word */}
+            <div className="flex-1 flex flex-col items-center justify-center p-6 border-x border-gray-700/30 bg-black/20 backdrop-blur-sm">
+              {/* Image */}
+              <div className="w-48 h-48 md:w-64 md:h-64 rounded-2xl overflow-hidden shadow-2xl mb-6 ring-4 ring-yellow-500/30">
+                <img
+                  src={level.imageHint}
+                  alt="hint"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              {/* Word Display */}
+              <div className="text-center">
+                <p className="text-xl text-gray-300 mb-2">{level.sentence}</p>
+                <div className="flex justify-center gap-2">
+                  {level.targetWord.split('').map((_, index) => (
+                    <div
+                      key={index}
+                      className="w-10 h-12 border-b-4 border-yellow-500 flex items-center justify-center"
+                    >
+                      <span className="text-2xl text-gray-500">_</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-4 text-gray-500 text-sm">
+                  {level.targetWord.length}글자
+                </p>
+              </div>
+            </div>
+
+            {/* Player 2 Area (Right) */}
+            <div className="flex-1 flex flex-col items-center justify-center p-4 bg-transparent">
+              {!isPlayer2Connected ? (
+                /* 초대 대기 화면 */
+                <div className="flex flex-col items-center justify-center text-center">
+                  <div className="w-36 h-36 md:w-48 md:h-48 rounded-full bg-gray-800 flex items-center justify-center mb-4 border-4 border-dashed border-gray-600">
+                    <i className="fa-solid fa-user-plus text-4xl md:text-5xl text-gray-500"></i>
+                  </div>
+                  <p className="text-gray-400 mb-6 text-lg">Player 2 참가 대기중</p>
+
+                  {/* 온라인 초대 버튼 */}
+                  <button
+                    onClick={onInvite}
+                    className="w-full max-w-xs px-6 py-4 bg-teal-600 hover:bg-teal-500 text-white rounded-xl font-semibold transition-colors shadow-lg shadow-teal-500/30 flex items-center justify-center gap-2"
+                  >
+                    <i className="fa-solid fa-share-nodes"></i>
+                    친구 초대하기
+                  </button>
+                </div>
+              ) : (
+                /* 기존 Player 2 입력 화면 */
+                <>
+                  {/* Player 2 Character */}
+                  <div className="mb-4 relative">
+                    <div
+                      className="w-36 h-36 md:w-48 md:h-48 relative flex items-center justify-center"
+                      style={{
+                        filter: 'drop-shadow(0 0 25px rgba(239, 68, 68, 0.8))',
+                      }}
+                    >
+                      <img
+                        src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png"
+                        alt="Player 2"
+                        className="w-full h-full object-contain"
+                        style={{
+                          filter: 'hue-rotate(-30deg) brightness(1.1)',
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className="text-center mb-2">
+                    <span className="text-sm text-red-300">P키를 눌러 입력</span>
+                  </div>
+                  <form onSubmit={handlePlayer2Submit} className="w-full max-w-xs">
+                    <input
+                      ref={player2InputRef}
+                      type="text"
+                      value={player2Input}
+                      onChange={(e) => setPlayer2Input(e.target.value)}
+                      placeholder="단어를 입력하세요"
+                      disabled={showResult}
+                      className="w-full px-4 py-3 text-xl text-center border-2 border-red-500 rounded-xl focus:border-red-400 focus:outline-none disabled:bg-gray-700 bg-gray-800 text-white placeholder-gray-500"
+                      autoComplete="off"
+                    />
+                    <button
+                      type="submit"
+                      disabled={showResult || !player2Input.trim()}
+                      className="w-full mt-3 py-3 bg-red-600 hover:bg-red-500 disabled:bg-gray-600 text-white rounded-xl font-semibold transition-colors shadow-lg shadow-red-500/30"
+                    >
+                      제출 (Enter)
+                    </button>
+                  </form>
+                  {showResult && players[1].isCorrect !== null && (
+                    <div className={`mt-3 text-2xl font-bold ${players[1].isCorrect ? 'text-green-400' : 'text-red-400'}`}>
+                      {players[1].isCorrect ? '정답! ✓' : '오답 ✗'}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* 라운드 승자 표시 (모든 게임 타입 공통) */}
+        {showResult && roundWinner && (
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 p-4 bg-yellow-500/20 border border-yellow-500/50 rounded-xl backdrop-blur-sm z-20">
+            <span className="text-xl font-bold text-yellow-400">
+              🎉 {roundWinner === 1 ? players[0].name : players[1].name} 승리!
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
