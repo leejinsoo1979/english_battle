@@ -23,12 +23,22 @@ export interface Player {
   isCorrect: boolean | null;
 }
 
+export interface GameRoom {
+  roomId: string;
+  hostName: string;
+  guestName?: string;
+  isReady: boolean;
+  createdAt: number;
+}
+
 export interface GameState {
   currentLevelIndex: number;
   score: number;
   timeLeft: number;
-  status: 'playing' | 'level-complete' | 'game-over' | 'intro' | 'versus' | 'versus-result';
-  gameMode: 'single' | 'versus';
+  status: 'playing' | 'level-complete' | 'game-over' | 'intro' | 'versus' | 'versus-result' | 'lobby' | 'waiting';
+  gameMode: 'single' | 'versus' | 'online';
   players?: [Player, Player];
   winner?: 1 | 2 | 'draw' | null;
+  room?: GameRoom;
+  isHost?: boolean;
 }

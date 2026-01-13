@@ -1,6 +1,7 @@
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { QuizLevel, Player } from '../types';
+import robotImage from './images/robot.png';
 
 interface Props {
   level: QuizLevel;
@@ -107,8 +108,17 @@ const VersusScreen: React.FC<Props> = ({
       {/* Main Content - 3 Columns */}
       <div className="flex-1 flex">
         {/* Player 1 Area (Left) */}
-        <div className="flex-1 flex flex-col items-center justify-center p-6 bg-blue-50/50">
-          <div className="text-center mb-4">
+        <div className="flex-1 flex flex-col items-center justify-center p-4 bg-blue-50/50">
+          {/* Player 1 Character */}
+          <div className="mb-4">
+            <img
+              src={robotImage}
+              alt="Player 1"
+              className="w-36 h-36 md:w-48 md:h-48 object-contain"
+              style={{ filter: 'hue-rotate(200deg)' }}
+            />
+          </div>
+          <div className="text-center mb-2">
             <span className="text-sm text-gray-500">Q키를 눌러 입력</span>
           </div>
           <form onSubmit={handlePlayer1Submit} className="w-full max-w-xs">
@@ -125,13 +135,13 @@ const VersusScreen: React.FC<Props> = ({
             <button
               type="submit"
               disabled={showResult || !player1Input.trim()}
-              className="w-full mt-4 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-xl font-semibold transition-colors"
+              className="w-full mt-3 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-xl font-semibold transition-colors"
             >
               제출 (Enter)
             </button>
           </form>
           {showResult && players[0].isCorrect !== null && (
-            <div className={`mt-4 text-2xl font-bold ${players[0].isCorrect ? 'text-green-500' : 'text-red-500'}`}>
+            <div className={`mt-3 text-2xl font-bold ${players[0].isCorrect ? 'text-green-500' : 'text-red-500'}`}>
               {players[0].isCorrect ? '정답! ✓' : '오답 ✗'}
             </div>
           )}
@@ -177,8 +187,17 @@ const VersusScreen: React.FC<Props> = ({
         </div>
 
         {/* Player 2 Area (Right) */}
-        <div className="flex-1 flex flex-col items-center justify-center p-6 bg-red-50/50">
-          <div className="text-center mb-4">
+        <div className="flex-1 flex flex-col items-center justify-center p-4 bg-red-50/50">
+          {/* Player 2 Character */}
+          <div className="mb-4">
+            <img
+              src={robotImage}
+              alt="Player 2"
+              className="w-36 h-36 md:w-48 md:h-48 object-contain"
+              style={{ filter: 'hue-rotate(-30deg)' }}
+            />
+          </div>
+          <div className="text-center mb-2">
             <span className="text-sm text-gray-500">P키를 눌러 입력</span>
           </div>
           <form onSubmit={handlePlayer2Submit} className="w-full max-w-xs">
@@ -195,13 +214,13 @@ const VersusScreen: React.FC<Props> = ({
             <button
               type="submit"
               disabled={showResult || !player2Input.trim()}
-              className="w-full mt-4 py-3 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 text-white rounded-xl font-semibold transition-colors"
+              className="w-full mt-3 py-3 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 text-white rounded-xl font-semibold transition-colors"
             >
               제출 (Enter)
             </button>
           </form>
           {showResult && players[1].isCorrect !== null && (
-            <div className={`mt-4 text-2xl font-bold ${players[1].isCorrect ? 'text-green-500' : 'text-red-500'}`}>
+            <div className={`mt-3 text-2xl font-bold ${players[1].isCorrect ? 'text-green-500' : 'text-red-500'}`}>
               {players[1].isCorrect ? '정답! ✓' : '오답 ✗'}
             </div>
           )}

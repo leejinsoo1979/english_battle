@@ -1,15 +1,29 @@
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { QuizLevel, GameState } from './types';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { QuizLevel, GameState, Player, GameRoom } from './types';
 import { LEVELS as DEFAULT_LEVELS, GAME_DURATION } from './constants';
 import GameHeader from './components/GameHeader';
 import QuizScreen from './components/QuizScreen';
 import ResultScreen from './components/ResultScreen';
 import IntroScreen from './components/IntroScreen';
 import AdminScreen from './components/AdminScreen';
+import VersusScreen from './components/VersusScreen';
+import VersusResultScreen from './components/VersusResultScreen';
+import LobbyScreen from './components/LobbyScreen';
 import confetti from 'canvas-confetti';
 
 const STORAGE_KEY = 'phonics-master-levels';
+const ROOM_STORAGE_KEY = 'phonics-master-room';
+
+// 방 ID 생성 함수
+const generateRoomId = () => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
 
 const App: React.FC = () => {
   const [levels, setLevels] = useState<QuizLevel[]>(() => {
@@ -29,11 +43,53 @@ const App: React.FC = () => {
     score: 0,
     timeLeft: GAME_DURATION,
     status: 'intro',
+    gameMode: 'single',
   });
 
   const [showAdmin, setShowAdmin] = useState(false);
+  const [roundWinner, setRoundWinner] = useState<1 | 2 | null>(null);
 
   const timerRef = useRef<number | null>(null);
+  const pollIntervalRef = useRef<number | null>(null);
+
+  // URL에서 방 코드 확인
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomId = urlParams.get('room');
+
+    if (roomId) {
+      // 초대 링크로 접속한 경우
+      joinRoom(roomId);
+    }
+  }, []);
+
+  // 방 상태 폴링 (localStorage 기반 - 같은 브라우저에서만 동작)
+  useEffect(() => {
+    if (gameState.status === 'lobby' && gameState.room) {
+      pollIntervalRef.current = window.setInterval(() => {
+        const savedRoom = localStorage.getItem(`${ROOM_STORAGE_KEY}-${gameState.room?.roomId}`);
+        if (savedRoom) {
+          const room: GameRoom = JSON.parse(savedRoom);
+          setGameState(prev => ({
+            ...prev,
+            room,
+          }));
+
+          // 호스트가 게임 시작했는지 확인
+          const gameStarted = localStorage.getItem(`${ROOM_STORAGE_KEY}-${gameState.room?.roomId}-started`);
+          if (gameStarted === 'true' && !gameState.isHost) {
+            startOnlineGame();
+          }
+        }
+      }, 1000);
+
+      return () => {
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+        }
+      };
+    }
+  }, [gameState.status, gameState.room?.roomId, gameState.isHost]);
 
   // Save levels to localStorage
   const saveLevels = (newLevels: QuizLevel[]) => {
@@ -64,9 +120,227 @@ const App: React.FC = () => {
       score: 0,
       timeLeft: GAME_DURATION,
       status: 'playing',
+      gameMode: 'single',
     });
     startTimer();
   };
+
+  const startVersusGame = () => {
+    if (levels.length === 0) {
+      alert('레벨이 없습니다. 관리자 화면에서 레벨을 추가하세요!');
+      return;
+    }
+    const initialPlayers: [Player, Player] = [
+      { id: 1, name: 'Player 1', score: 0, currentInput: '', isCorrect: null },
+      { id: 2, name: 'Player 2', score: 0, currentInput: '', isCorrect: null },
+    ];
+    setGameState({
+      currentLevelIndex: 0,
+      score: 0,
+      timeLeft: GAME_DURATION,
+      status: 'versus',
+      gameMode: 'versus',
+      players: initialPlayers,
+      winner: null,
+    });
+    setRoundWinner(null);
+  };
+
+  // 온라인 방 만들기
+  const createRoom = () => {
+    if (levels.length === 0) {
+      alert('레벨이 없습니다. 관리자 화면에서 레벨을 추가하세요!');
+      return;
+    }
+
+    const roomId = generateRoomId();
+    const room: GameRoom = {
+      roomId,
+      hostName: 'Player 1',
+      isReady: true,
+      createdAt: Date.now(),
+    };
+
+    // localStorage에 방 정보 저장
+    localStorage.setItem(`${ROOM_STORAGE_KEY}-${roomId}`, JSON.stringify(room));
+
+    setGameState({
+      currentLevelIndex: 0,
+      score: 0,
+      timeLeft: GAME_DURATION,
+      status: 'lobby',
+      gameMode: 'online',
+      room,
+      isHost: true,
+    });
+  };
+
+  // 방 참가하기
+  const joinRoom = (roomId: string) => {
+    const savedRoom = localStorage.getItem(`${ROOM_STORAGE_KEY}-${roomId}`);
+
+    if (!savedRoom) {
+      alert('존재하지 않는 방입니다.');
+      // URL에서 room 파라미터 제거
+      window.history.replaceState({}, '', window.location.pathname);
+      return;
+    }
+
+    const room: GameRoom = JSON.parse(savedRoom);
+
+    if (room.guestName) {
+      alert('이미 다른 플레이어가 참가한 방입니다.');
+      window.history.replaceState({}, '', window.location.pathname);
+      return;
+    }
+
+    // 게스트 정보 추가
+    room.guestName = 'Player 2';
+    room.isReady = true;
+    localStorage.setItem(`${ROOM_STORAGE_KEY}-${roomId}`, JSON.stringify(room));
+
+    setGameState({
+      currentLevelIndex: 0,
+      score: 0,
+      timeLeft: GAME_DURATION,
+      status: 'lobby',
+      gameMode: 'online',
+      room,
+      isHost: false,
+    });
+
+    // URL에서 room 파라미터 제거
+    window.history.replaceState({}, '', window.location.pathname);
+  };
+
+  // 방 나가기
+  const leaveRoom = () => {
+    if (gameState.room) {
+      if (gameState.isHost) {
+        // 호스트가 나가면 방 삭제
+        localStorage.removeItem(`${ROOM_STORAGE_KEY}-${gameState.room.roomId}`);
+        localStorage.removeItem(`${ROOM_STORAGE_KEY}-${gameState.room.roomId}-started`);
+      } else {
+        // 게스트가 나가면 게스트 정보만 삭제
+        const room = { ...gameState.room };
+        delete room.guestName;
+        localStorage.setItem(`${ROOM_STORAGE_KEY}-${room.roomId}`, JSON.stringify(room));
+      }
+    }
+
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+    }
+
+    resetGame();
+  };
+
+  // 플레이어 이름 업데이트
+  const updatePlayerName = (name: string) => {
+    if (!gameState.room) return;
+
+    const room = { ...gameState.room };
+    if (gameState.isHost) {
+      room.hostName = name;
+    } else {
+      room.guestName = name;
+    }
+
+    localStorage.setItem(`${ROOM_STORAGE_KEY}-${room.roomId}`, JSON.stringify(room));
+    setGameState(prev => ({ ...prev, room }));
+  };
+
+  // 온라인 게임 시작
+  const startOnlineGame = () => {
+    if (!gameState.room) return;
+
+    const room = gameState.room;
+
+    // 게임 시작 플래그 설정
+    localStorage.setItem(`${ROOM_STORAGE_KEY}-${room.roomId}-started`, 'true');
+
+    const initialPlayers: [Player, Player] = [
+      { id: 1, name: room.hostName, score: 0, currentInput: '', isCorrect: null },
+      { id: 2, name: room.guestName || 'Player 2', score: 0, currentInput: '', isCorrect: null },
+    ];
+
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+    }
+
+    setGameState(prev => ({
+      ...prev,
+      status: 'versus',
+      players: initialPlayers,
+      winner: null,
+    }));
+    setRoundWinner(null);
+  };
+
+  const handleVersusAnswer = useCallback((playerId: 1 | 2, answer: string) => {
+    const currentLevel = levels[gameState.currentLevelIndex];
+    const isCorrect = answer.toLowerCase() === currentLevel.targetWord.toLowerCase();
+
+    setGameState(prev => {
+      if (!prev.players) return prev;
+
+      const updatedPlayers = [...prev.players] as [Player, Player];
+      const playerIndex = playerId - 1;
+      updatedPlayers[playerIndex] = {
+        ...updatedPlayers[playerIndex],
+        currentInput: answer,
+        isCorrect,
+      };
+
+      if (isCorrect) {
+        updatedPlayers[playerIndex].score += 1;
+        setRoundWinner(playerId);
+      }
+
+      return {
+        ...prev,
+        players: updatedPlayers,
+      };
+    });
+  }, [levels, gameState.currentLevelIndex]);
+
+  const handleVersusNextLevel = useCallback(() => {
+    setGameState(prev => {
+      if (!prev.players) return prev;
+
+      const isLastLevel = prev.currentLevelIndex === levels.length - 1;
+
+      if (isLastLevel) {
+        // 게임 종료
+        const player1Score = prev.players[0].score;
+        const player2Score = prev.players[1].score;
+        let winner: 1 | 2 | 'draw';
+        if (player1Score > player2Score) winner = 1;
+        else if (player2Score > player1Score) winner = 2;
+        else winner = 'draw';
+
+        return {
+          ...prev,
+          status: 'versus-result',
+          winner,
+        };
+      }
+
+      // 다음 라운드
+      const resetPlayers: [Player, Player] = [
+        { ...prev.players[0], currentInput: '', isCorrect: null },
+        { ...prev.players[1], currentInput: '', isCorrect: null },
+      ];
+
+      setRoundWinner(null);
+
+      return {
+        ...prev,
+        currentLevelIndex: prev.currentLevelIndex + 1,
+        players: resetPlayers,
+      };
+    });
+  }, [levels.length]);
 
   const handleLevelComplete = useCallback((earnedScore: number) => {
     setGameState(prev => {
@@ -99,7 +373,9 @@ const App: React.FC = () => {
       score: 0,
       timeLeft: GAME_DURATION,
       status: 'intro',
+      gameMode: 'single',
     });
+    setRoundWinner(null);
     if (timerRef.current) clearInterval(timerRef.current);
   };
 
@@ -119,7 +395,22 @@ const App: React.FC = () => {
   return (
     <div className="h-full w-full flex flex-col items-center justify-start relative select-none overflow-hidden">
       {gameState.status === 'intro' && (
-        <IntroScreen onStart={startGame} onAdmin={() => setShowAdmin(true)} />
+        <IntroScreen
+          onStart={startGame}
+          onVersus={startVersusGame}
+          onCreateRoom={createRoom}
+          onAdmin={() => setShowAdmin(true)}
+        />
+      )}
+
+      {gameState.status === 'lobby' && gameState.room && (
+        <LobbyScreen
+          room={gameState.room}
+          isHost={gameState.isHost || false}
+          onStartGame={startOnlineGame}
+          onLeave={leaveRoom}
+          onUpdateName={updatePlayerName}
+        />
       )}
 
       {gameState.status === 'playing' && currentLevel && (
@@ -135,6 +426,27 @@ const App: React.FC = () => {
             onComplete={handleLevelComplete}
           />
         </>
+      )}
+
+      {gameState.status === 'versus' && currentLevel && gameState.players && (
+        <VersusScreen
+          level={currentLevel}
+          players={gameState.players}
+          onAnswer={handleVersusAnswer}
+          onNextLevel={handleVersusNextLevel}
+          roundWinner={roundWinner}
+          currentRound={gameState.currentLevelIndex + 1}
+          totalRounds={levels.length}
+        />
+      )}
+
+      {gameState.status === 'versus-result' && gameState.players && gameState.winner && (
+        <VersusResultScreen
+          players={gameState.players}
+          winner={gameState.winner}
+          onRestart={startVersusGame}
+          onHome={resetGame}
+        />
       )}
 
       {gameState.status === 'game-over' && (

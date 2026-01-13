@@ -4,10 +4,12 @@ import robotVideo from './images/robot_dance.mp4';
 
 interface Props {
   onStart: () => void;
+  onVersus: () => void;
+  onCreateRoom: () => void;
   onAdmin: () => void;
 }
 
-const IntroScreen: React.FC<Props> = ({ onStart, onAdmin }) => {
+const IntroScreen: React.FC<Props> = ({ onStart, onVersus, onAdmin }) => {
   return (
     <div className="h-full w-full relative overflow-hidden" style={{ backgroundColor: '#fef8ed' }}>
       {/* Admin Button */}
@@ -44,13 +46,22 @@ const IntroScreen: React.FC<Props> = ({ onStart, onAdmin }) => {
           />
         </div>
 
-        {/* Button - Bottom */}
-        <button
-          onClick={onStart}
-          className="px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold text-lg transition-colors shadow-lg z-10"
-        >
-          시작하기
-        </button>
+        {/* Buttons - Bottom */}
+        <div className="flex flex-col gap-4 z-10">
+          <button
+            onClick={onStart}
+            className="px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold text-lg transition-colors shadow-lg"
+          >
+            혼자 하기
+          </button>
+          <button
+            onClick={onVersus}
+            className="px-8 py-4 bg-teal-500 hover:bg-teal-600 text-white rounded-xl font-semibold text-lg transition-colors shadow-lg flex items-center justify-center gap-2"
+          >
+            <span>1 vs 1 대전</span>
+            <i className="fa-solid fa-users"></i>
+          </button>
+        </div>
       </div>
     </div>
   );
