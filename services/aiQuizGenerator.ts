@@ -107,9 +107,22 @@ Use a real 3-5 letter English word that follows the phonics rule. Replace "cat" 
       }
     };
 
-    // Generate image URL using Unsplash (free, real photos)
+    // Generate image URL using Lexica.art (free AI images, no API key needed)
     const searchQuery = encodeURIComponent(generated.targetWord);
-    const imageUrl = `https://source.unsplash.com/512x512/?${searchQuery}`;
+    const imageUrl = `https://lexica.art/api/v1/search?q=${searchQuery}`;
+
+    // Fetch actual image from Lexica
+    let finalImageUrl = `https://picsum.photos/seed/${generated.targetWord}/512/512`; // fallback
+    try {
+      const imgResponse = await fetch(imageUrl);
+      const imgData = await imgResponse.json();
+      if (imgData.images && imgData.images.length > 0) {
+        finalImageUrl = imgData.images[0].src;
+      }
+    } catch {
+      // Use Lorem Picsum as fallback with word as seed
+      finalImageUrl = `https://picsum.photos/seed/${generated.targetWord}/512/512`;
+    }
 
     // Find indices for phonics rule highlighting
     const indices: number[] = [];
@@ -126,7 +139,7 @@ Use a real 3-5 letter English word that follows the phonics rule. Replace "cat" 
       id: `ai-${Date.now()}`,
       targetWord: generated.targetWord.toLowerCase(),
       sentence: generated.sentence,
-      imageHint: imageUrl,
+      imageHint: finalImageUrl,
       distractors: generated.distractors.map(d => d.toLowerCase()),
       phonicsRules: [{
         name: randomRule.name,
