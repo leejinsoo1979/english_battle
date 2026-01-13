@@ -6,23 +6,32 @@ import { playSound } from '../utils/sounds';
 interface Props {
   id: string;
   char: string;
+  onDoubleClick?: (id: string) => void;
 }
 
-const LetterBlock: React.FC<Props> = ({ id, char }) => {
+const LetterBlock: React.FC<Props> = ({ id, char, onDoubleClick }) => {
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData('text/plain', id);
     e.dataTransfer.effectAllowed = 'move';
     playSound('pop', 0.2);
   };
 
+  const handleDoubleClick = () => {
+    if (onDoubleClick) {
+      playSound('snap', 0.3);
+      onDoubleClick(id);
+    }
+  };
+
   return (
-    <motion.div 
+    <motion.div
       layoutId={id}
       whileHover={{ scale: 1.1, rotate: 2 }}
       whileTap={{ scale: 0.9, rotate: -2 }}
       draggable
       onDragStart={handleDragStart}
-      className="w-14 h-14 md:w-16 md:h-16 flex items-center justify-center bg-white border-2 border-orange-200 rounded-xl shadow-[0_4px_0_rgb(254,215,170)] cursor-grab active:cursor-grabbing active:shadow-none active:translate-y-1 transition-all relative"
+      onDoubleClick={handleDoubleClick}
+      className="w-14 h-14 md:w-16 md:h-16 flex items-center justify-center bg-white border-2 border-orange-200 rounded-xl shadow-[0_4px_0_rgb(254,215,170)] cursor-grab active:cursor-grabbing active:shadow-none active:translate-y-1 transition-all relative select-none"
     >
       <span className="text-2xl md:text-3xl font-fredoka text-orange-600 select-none">
         {char}

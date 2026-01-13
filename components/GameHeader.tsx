@@ -9,9 +9,8 @@ interface Props {
   timeLeft: number;
 }
 
-const GameHeader: React.FC<Props> = ({ unitName, currentStep, totalSteps, timeLeft }) => {
+const GameHeader: React.FC<Props> = ({ unitName, currentStep, totalSteps }) => {
   const progressPercent = (currentStep / totalSteps) * 100;
-  const isLowTime = timeLeft <= 10;
 
   return (
     <div className="w-full max-w-2xl px-4 pt-4 pb-2">
@@ -49,19 +48,8 @@ const GameHeader: React.FC<Props> = ({ unitName, currentStep, totalSteps, timeLe
           </span>
         </div>
 
-        {/* Right: Timer */}
-        <motion.div
-          animate={isLowTime ? { scale: [1, 1.1, 1] } : {}}
-          transition={{ repeat: isLowTime ? Infinity : 0, duration: 0.5 }}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all duration-300 ${
-            isLowTime
-              ? 'bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-lg shadow-red-200'
-              : 'bg-gradient-to-r from-gray-100 to-gray-50 text-gray-600'
-          }`}
-        >
-          <i className={`fa-solid fa-bolt text-xs ${isLowTime ? 'animate-pulse' : ''}`}></i>
-          <span className="text-sm font-bold tabular-nums">{timeLeft}s</span>
-        </motion.div>
+        {/* Spacer for layout balance */}
+        <div className="w-16"></div>
       </div>
 
       {/* Thin Progress Bar */}
