@@ -107,21 +107,25 @@ Use a real 3-5 letter English word that follows the phonics rule. Replace "cat" 
       }
     };
 
-    // Generate image URL using Lexica.art (free AI images, no API key needed)
+    // Generate image URL using Pixabay API (free, 무료 API 키 포함)
+    const PIXABAY_API_KEY = '47589267-0cd07b2cfa8d87095a3504dc7';
     const searchQuery = encodeURIComponent(generated.targetWord);
-    const imageUrl = `https://lexica.art/api/v1/search?q=${searchQuery}`;
 
-    // Fetch actual image from Lexica
-    let finalImageUrl = `https://picsum.photos/seed/${generated.targetWord}/512/512`; // fallback
+    let finalImageUrl = '';
     try {
-      const imgResponse = await fetch(imageUrl);
+      const imgResponse = await fetch(
+        `https://pixabay.com/api/?key=${PIXABAY_API_KEY}&q=${searchQuery}&image_type=photo&per_page=5&safesearch=true`
+      );
       const imgData = await imgResponse.json();
-      if (imgData.images && imgData.images.length > 0) {
-        finalImageUrl = imgData.images[0].src;
+      if (imgData.hits && imgData.hits.length > 0) {
+        // 가장 관련성 높은 이미지 선택
+        finalImageUrl = imgData.hits[0].webformatURL;
+      } else {
+        // 결과 없으면 기본 이미지
+        finalImageUrl = `https://via.placeholder.com/512x512.png?text=${searchQuery}`;
       }
     } catch {
-      // Use Lorem Picsum as fallback with word as seed
-      finalImageUrl = `https://picsum.photos/seed/${generated.targetWord}/512/512`;
+      finalImageUrl = `https://via.placeholder.com/512x512.png?text=${searchQuery}`;
     }
 
     // Find indices for phonics rule highlighting

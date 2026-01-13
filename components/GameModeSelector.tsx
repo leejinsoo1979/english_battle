@@ -218,8 +218,8 @@ const GameModeSelector: React.FC<Props> = ({ onSelect, onBack }) => {
           <div className="mt-3 h-[2px] w-32 mx-auto bg-gradient-to-r from-transparent via-white/30 to-transparent" />
         </motion.div>
 
-        {/* 게임 모드 카드 */}
-        <div className="flex flex-wrap justify-center gap-4 max-w-5xl w-full mb-10">
+        {/* 게임 모드 카드 - 한 줄 배치 */}
+        <div className="flex justify-center gap-5 w-full mb-10 overflow-x-auto px-4">
           {GAME_MODES.map((mode, index) => {
             const isSelected = selectedMode === mode.type;
             const isHovered = hoveredMode === mode.type;
@@ -233,7 +233,7 @@ const GameModeSelector: React.FC<Props> = ({ onSelect, onBack }) => {
                 onClick={() => setSelectedMode(mode.type)}
                 onMouseEnter={() => setHoveredMode(mode.type)}
                 onMouseLeave={() => setHoveredMode(null)}
-                className={`relative w-40 h-48 rounded-2xl transition-all duration-300 ${
+                className={`relative flex-shrink-0 w-56 h-72 rounded-2xl transition-all duration-300 ${
                   isSelected
                     ? 'scale-105'
                     : 'hover:scale-[1.02]'
@@ -257,33 +257,34 @@ const GameModeSelector: React.FC<Props> = ({ onSelect, onBack }) => {
                 )}
 
                 {/* 카드 내용 */}
-                <div className="relative h-full flex flex-col items-center justify-center p-4">
-                  {/* 아이콘 */}
-                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 transition-all duration-300 ${
-                    isSelected
-                      ? 'bg-white/20'
-                      : `bg-gradient-to-br ${mode.gradient}`
+                <div className="relative h-full flex flex-col items-center justify-between p-4">
+                  {/* 썸네일 이미지 */}
+                  <div className={`w-full h-40 rounded-xl overflow-hidden transition-all duration-300 ${
+                    isSelected ? 'bg-white/10' : 'bg-gray-900/50'
                   }`}>
-                    <i className={`fa-solid ${mode.icon} text-2xl text-white`}></i>
+                    {mode.thumbnail}
                   </div>
 
-                  {/* 타이틀 */}
-                  <h3 className={`text-lg font-bold tracking-wide transition-colors duration-300 ${
-                    isSelected ? 'text-white' : 'text-gray-200'
-                  }`}>
-                    {mode.name}
-                  </h3>
+                  {/* 하단 정보 */}
+                  <div className="text-center mt-3">
+                    {/* 타이틀 */}
+                    <h3 className={`text-xl font-bold tracking-wide transition-colors duration-300 ${
+                      isSelected ? 'text-white' : 'text-gray-200'
+                    }`}>
+                      {mode.name}
+                    </h3>
 
-                  {/* 설명 */}
-                  <p className={`text-xs mt-2 text-center transition-colors duration-300 ${
-                    isSelected ? 'text-white/80' : 'text-gray-500'
-                  }`}>
-                    {mode.description}
-                  </p>
+                    {/* 설명 */}
+                    <p className={`text-sm mt-1 transition-colors duration-300 ${
+                      isSelected ? 'text-white/80' : 'text-gray-500'
+                    }`}>
+                      {mode.description}
+                    </p>
+                  </div>
 
                   {/* RECOMMENDED 뱃지 */}
                   {mode.type === 'random' && (
-                    <div className="absolute -top-2 -right-2 px-2 py-1 bg-white text-[10px] font-bold text-gray-900 rounded-full shadow-lg">
+                    <div className="absolute -top-2 -right-2 px-3 py-1 bg-white text-xs font-bold text-gray-900 rounded-full shadow-lg">
                       HOT
                     </div>
                   )}
@@ -293,9 +294,9 @@ const GameModeSelector: React.FC<Props> = ({ onSelect, onBack }) => {
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="absolute top-3 right-3 w-6 h-6 bg-white rounded-full flex items-center justify-center"
+                      className="absolute top-3 right-3 w-7 h-7 bg-white rounded-full flex items-center justify-center"
                     >
-                      <i className="fa-solid fa-check text-xs text-gray-900"></i>
+                      <i className="fa-solid fa-check text-sm text-gray-900"></i>
                     </motion.div>
                   )}
                 </div>
