@@ -107,26 +107,11 @@ Use a real 3-5 letter English word that follows the phonics rule. Replace "cat" 
       }
     };
 
-    // Generate image URL using Pixabay API (free, 무료 API 키 포함)
-    const PIXABAY_API_KEY = '47589267-0cd07b2cfa8d87095a3504dc7';
-    const searchQuery = encodeURIComponent(generated.targetWord);
+    // Generate image using Google Images via serpapi-like free service
+    const searchQuery = encodeURIComponent(generated.targetWord + ' photo');
 
-    let finalImageUrl = '';
-    try {
-      const imgResponse = await fetch(
-        `https://pixabay.com/api/?key=${PIXABAY_API_KEY}&q=${searchQuery}&image_type=photo&per_page=5&safesearch=true`
-      );
-      const imgData = await imgResponse.json();
-      if (imgData.hits && imgData.hits.length > 0) {
-        // 가장 관련성 높은 이미지 선택
-        finalImageUrl = imgData.hits[0].webformatURL;
-      } else {
-        // 결과 없으면 기본 이미지
-        finalImageUrl = `https://via.placeholder.com/512x512.png?text=${searchQuery}`;
-      }
-    } catch {
-      finalImageUrl = `https://via.placeholder.com/512x512.png?text=${searchQuery}`;
-    }
+    // Use loremflickr - 단어 기반 실제 사진 제공 (무료, API 키 불필요)
+    const finalImageUrl = `https://loremflickr.com/512/512/${encodeURIComponent(generated.targetWord)}`;
 
     // Find indices for phonics rule highlighting
     const indices: number[] = [];
