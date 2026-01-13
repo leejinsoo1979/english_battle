@@ -48,6 +48,73 @@ const WordShooterGame: React.FC<Props> = ({
 
   const targetWord = level.targetWord.toUpperCase();
 
+  // Refs for current state (to avoid stale closures in event handlers)
+  const player1CrosshairRef = useRef(player1Crosshair);
+  const player2CrosshairRef = useRef(player2Crosshair);
+  const player1BalloonsRef = useRef(player1Balloons);
+  const player2BalloonsRef = useRef(player2Balloons);
+  const player1ProgressRef = useRef(player1Progress);
+  const player2ProgressRef = useRef(player2Progress);
+
+  // Keep refs updated
+  useEffect(() => { player1CrosshairRef.current = player1Crosshair; }, [player1Crosshair]);
+  useEffect(() => { player2CrosshairRef.current = player2Crosshair; }, [player2Crosshair]);
+  useEffect(() => { player1BalloonsRef.current = player1Balloons; }, [player1Balloons]);
+  useEffect(() => { player2BalloonsRef.current = player2Balloons; }, [player2Balloons]);
+  useEffect(() => { player1ProgressRef.current = player1Progress; }, [player1Progress]);
+  useEffect(() => { player2ProgressRef.current = player2Progress; }, [player2Progress]);
+
+  // 풍선 쏘기
+  const shootBalloon = useCallback((player: 1 | 2) => {
+    const crosshair = player === 1 ? player1CrosshairRef.current : player2CrosshairRef.current;
+    const balloons = player === 1 ? player1BalloonsRef.current : player2BalloonsRef.current;
+    const setBalloons = player === 1 ? setPlayer1Balloons : setPlayer2Balloons;
+    const progress = player === 1 ? player1ProgressRef.current : player2ProgressRef.current;
+    const setProgress = player === 1 ? setPlayer1Progress : setPlayer2Progress;
+
+    // 조준점 근처 풍선 찾기
+    const hitBalloon = balloons.find(
+      balloon =>
+        Math.abs(balloon.x - crosshair.x) < 12 &&
+        Math.abs(balloon.y - crosshair.y) < 12
+    );
+
+    if (!hitBalloon) {
+      playSound('pop', 0.1);
+      return;
+    }
+
+    const nextIndex = progress.length;
+    const nextChar = targetWord[nextIndex];
+
+    // 폭발 효과
+    setExplosions(prev => [...prev, { id: hitBalloon.id, x: hitBalloon.x, y: hitBalloon.y, color: hitBalloon.color }]);
+    setTimeout(() => {
+      setExplosions(prev => prev.filter(e => e.id !== hitBalloon.id));
+    }, 500);
+
+    if (hitBalloon.char === nextChar) {
+      // 정답!
+      playSound('pop', 0.4);
+      setProgress(prev => [...prev, hitBalloon.char]);
+      setBalloons(prev => prev.filter(b => b.id !== hitBalloon.id));
+
+      // 단어 완성
+      if (nextIndex + 1 === targetWord.length) {
+        playSound('fanfare', 0.5);
+        if (player === 1) {
+          onPlayer1Answer(targetWord);
+        } else {
+          onPlayer2Answer(targetWord);
+        }
+      }
+    } else {
+      // 오답
+      playSound('wrong', 0.3);
+      setBalloons(prev => prev.filter(b => b.id !== hitBalloon.id));
+    }
+  }, [targetWord, onPlayer1Answer, onPlayer2Answer]);
+
   // 풍선 생성
   const generateBalloons = useCallback(() => {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -132,104 +199,87 @@ const WordShooterGame: React.FC<Props> = ({
     };
   }, [gameStarted, disabled]);
 
-  // 키보드 조작
+  // 키보드 상태 추적 (연속 이동용)
+  const keysPressed = useRef<Set<string>>(new Set());
+
+  // 키보드 조작 - keydown/keyup으로 연속 이동 지원
   useEffect(() => {
     if (!gameStarted || disabled) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      const speed = 5;
+      const key = e.key.toLowerCase();
 
-      // Player 1: WASD + Space
-      if (e.key === 'w' || e.key === 'W') {
-        setPlayer1Crosshair(prev => ({ ...prev, y: Math.max(5, prev.y - speed) }));
-      }
-      if (e.key === 's' || e.key === 'S') {
-        setPlayer1Crosshair(prev => ({ ...prev, y: Math.min(95, prev.y + speed) }));
-      }
-      if (e.key === 'a' || e.key === 'A') {
-        setPlayer1Crosshair(prev => ({ ...prev, x: Math.max(5, prev.x - speed) }));
-      }
-      if (e.key === 'd' || e.key === 'D') {
-        setPlayer1Crosshair(prev => ({ ...prev, x: Math.min(95, prev.x + speed) }));
-      }
-      if (e.key === ' ' || e.key === 'q' || e.key === 'Q') {
+      // 발사 키는 keydown에서 바로 처리
+      if (e.key === ' ' || key === 'q') {
         e.preventDefault();
         shootBalloon(1);
+        return;
       }
-
-      // Player 2: Arrow keys + Enter
-      if (e.key === 'ArrowUp') {
-        setPlayer2Crosshair(prev => ({ ...prev, y: Math.max(5, prev.y - speed) }));
-      }
-      if (e.key === 'ArrowDown') {
-        setPlayer2Crosshair(prev => ({ ...prev, y: Math.min(95, prev.y + speed) }));
-      }
-      if (e.key === 'ArrowLeft') {
-        setPlayer2Crosshair(prev => ({ ...prev, x: Math.max(5, prev.x - speed) }));
-      }
-      if (e.key === 'ArrowRight') {
-        setPlayer2Crosshair(prev => ({ ...prev, x: Math.min(95, prev.x + speed) }));
-      }
-      if (e.key === 'Enter' || e.key === 'p' || e.key === 'P') {
+      if (e.key === 'Enter' || key === 'p') {
         e.preventDefault();
         shootBalloon(2);
+        return;
+      }
+
+      // 방향키는 반복 방지
+      if (!keysPressed.current.has(key)) {
+        keysPressed.current.add(key);
+      }
+
+      // 화살표 키 기본 동작 방지 (스크롤 등)
+      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
+        e.preventDefault();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [gameStarted, disabled, player1Crosshair, player2Crosshair, player1Balloons, player2Balloons, player1Progress, player2Progress]);
+    const handleKeyUp = (e: KeyboardEvent) => {
+      keysPressed.current.delete(e.key.toLowerCase());
+    };
 
-  // 풍선 쏘기
-  const shootBalloon = (player: 1 | 2) => {
-    const crosshair = player === 1 ? player1Crosshair : player2Crosshair;
-    const balloons = player === 1 ? player1Balloons : player2Balloons;
-    const setBalloons = player === 1 ? setPlayer1Balloons : setPlayer2Balloons;
-    const progress = player === 1 ? player1Progress : player2Progress;
-    const setProgress = player === 1 ? setPlayer1Progress : setPlayer2Progress;
+    // 이동 루프 (60fps)
+    const moveInterval = setInterval(() => {
+      const speed = 3;
+      const keys = keysPressed.current;
 
-    // 조준점 근처 풍선 찾기
-    const hitBalloon = balloons.find(
-      balloon =>
-        Math.abs(balloon.x - crosshair.x) < 12 &&
-        Math.abs(balloon.y - crosshair.y) < 12
-    );
-
-    if (!hitBalloon) {
-      playSound('pop', 0.1);
-      return;
-    }
-
-    const nextIndex = progress.length;
-    const nextChar = targetWord[nextIndex];
-
-    // 폭발 효과
-    setExplosions(prev => [...prev, { id: hitBalloon.id, x: hitBalloon.x, y: hitBalloon.y, color: hitBalloon.color }]);
-    setTimeout(() => {
-      setExplosions(prev => prev.filter(e => e.id !== hitBalloon.id));
-    }, 500);
-
-    if (hitBalloon.char === nextChar) {
-      // 정답!
-      playSound('pop', 0.4);
-      setProgress(prev => [...prev, hitBalloon.char]);
-      setBalloons(prev => prev.filter(b => b.id !== hitBalloon.id));
-
-      // 단어 완성
-      if (nextIndex + 1 === targetWord.length) {
-        playSound('fanfare', 0.5);
-        if (player === 1) {
-          onPlayer1Answer(targetWord);
-        } else {
-          onPlayer2Answer(targetWord);
-        }
+      // Player 1: WASD
+      if (keys.has('w')) {
+        setPlayer1Crosshair(prev => ({ ...prev, y: Math.max(10, prev.y - speed) }));
       }
-    } else {
-      // 오답
-      playSound('wrong', 0.3);
-      setBalloons(prev => prev.filter(b => b.id !== hitBalloon.id));
-    }
-  };
+      if (keys.has('s')) {
+        setPlayer1Crosshair(prev => ({ ...prev, y: Math.min(90, prev.y + speed) }));
+      }
+      if (keys.has('a')) {
+        setPlayer1Crosshair(prev => ({ ...prev, x: Math.max(10, prev.x - speed) }));
+      }
+      if (keys.has('d')) {
+        setPlayer1Crosshair(prev => ({ ...prev, x: Math.min(90, prev.x + speed) }));
+      }
+
+      // Player 2: Arrow keys
+      if (keys.has('arrowup')) {
+        setPlayer2Crosshair(prev => ({ ...prev, y: Math.max(10, prev.y - speed) }));
+      }
+      if (keys.has('arrowdown')) {
+        setPlayer2Crosshair(prev => ({ ...prev, y: Math.min(90, prev.y + speed) }));
+      }
+      if (keys.has('arrowleft')) {
+        setPlayer2Crosshair(prev => ({ ...prev, x: Math.max(10, prev.x - speed) }));
+      }
+      if (keys.has('arrowright')) {
+        setPlayer2Crosshair(prev => ({ ...prev, x: Math.min(90, prev.x + speed) }));
+      }
+    }, 16); // ~60fps
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      clearInterval(moveInterval);
+      keysPressed.current.clear();
+    };
+  }, [gameStarted, disabled, shootBalloon]);
 
   // 레벨 변경 시 리셋
   useEffect(() => {

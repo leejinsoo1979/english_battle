@@ -694,100 +694,156 @@ const CorrectImpactEffect: React.FC<{
   playerName?: string;
   bonusPoints?: number;
 }> = ({ isVisible, playerName, bonusPoints }) => {
+  // 사운드 효과 재생
+  useEffect(() => {
+    if (isVisible) {
+      // 연속 사운드 효과
+      playSound('tada', 0.8);
+      setTimeout(() => playSound('applause', 0.6), 200);
+      setTimeout(() => playSound('levelUp', 0.5), 400);
+    }
+  }, [isVisible]);
+
   return (
     <AnimatePresence>
       {isVisible && (
         <>
-          {/* 화면 플래시 */}
+          {/* 화면 플래시 - 더 강렬하게 */}
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 1, 0.8, 0] }}
-            transition={{ duration: 0.5 }}
+            animate={{ opacity: [0, 1, 0.9, 0.7, 0] }}
+            transition={{ duration: 0.6, times: [0, 0.1, 0.2, 0.4, 1] }}
             className="fixed inset-0 z-[100] pointer-events-none"
             style={{
-              background: 'radial-gradient(circle at center, rgba(16, 185, 129, 0.8) 0%, rgba(16, 185, 129, 0.4) 40%, transparent 70%)',
+              background: 'radial-gradient(circle at center, rgba(255, 255, 255, 1) 0%, rgba(16, 185, 129, 0.9) 30%, rgba(16, 185, 129, 0.5) 60%, transparent 80%)',
             }}
           />
 
-          {/* CORRECT 텍스트 */}
+          {/* 골든 링 폭발 */}
+          {[...Array(3)].map((_, i) => (
+            <motion.div
+              key={`ring-${i}`}
+              initial={{ scale: 0, opacity: 1 }}
+              animate={{ scale: [0, 4 + i], opacity: [1, 0] }}
+              transition={{ duration: 0.8, delay: i * 0.15 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[99] pointer-events-none w-32 h-32 rounded-full border-8"
+              style={{
+                borderColor: i === 0 ? '#FFD700' : i === 1 ? '#10B981' : '#F59E0B',
+                boxShadow: `0 0 60px ${i === 0 ? '#FFD700' : i === 1 ? '#10B981' : '#F59E0B'}`,
+              }}
+            />
+          ))}
+
+          {/* CORRECT 텍스트 - 더 화려하게 */}
           <motion.div
-            initial={{ scale: 0, rotate: -15 }}
+            initial={{ scale: 0, rotate: -20 }}
             animate={{
-              scale: [0, 1.5, 1.2],
-              rotate: [-15, 5, 0],
+              scale: [0, 1.8, 1.3, 1.5, 1.3],
+              rotate: [-20, 10, -5, 5, 0],
             }}
-            exit={{ scale: 0, opacity: 0 }}
+            exit={{ scale: 0, opacity: 0, y: -100 }}
             transition={{
-              duration: 0.6,
+              duration: 0.8,
               type: "spring",
-              stiffness: 200,
+              stiffness: 300,
+              damping: 10,
             }}
             className="fixed inset-0 z-[101] flex items-center justify-center pointer-events-none"
           >
-            <div className="text-center">
-              <h1
-                className="text-6xl md:text-8xl font-fredoka font-black"
+            <div className="text-center relative">
+              {/* 뒤 글로우 */}
+              <motion.div
+                animate={{
+                  scale: [1, 1.2, 1],
+                  opacity: [0.5, 1, 0.5],
+                }}
+                transition={{ duration: 0.5, repeat: 4 }}
+                className="absolute inset-0 blur-3xl"
                 style={{
-                  background: 'linear-gradient(135deg, #10B981 0%, #34D399 30%, #6EE7B7 50%, #34D399 70%, #10B981 100%)',
+                  background: 'radial-gradient(circle, rgba(16, 185, 129, 0.8) 0%, transparent 70%)',
+                }}
+              />
+
+              <motion.h1
+                animate={{
+                  textShadow: [
+                    '0 0 20px #10B981, 0 0 40px #10B981, 0 0 60px #10B981',
+                    '0 0 40px #FFD700, 0 0 80px #FFD700, 0 0 120px #FFD700',
+                    '0 0 20px #10B981, 0 0 40px #10B981, 0 0 60px #10B981',
+                  ],
+                }}
+                transition={{ duration: 0.3, repeat: 5 }}
+                className="text-7xl md:text-9xl font-fredoka font-black relative"
+                style={{
+                  background: 'linear-gradient(135deg, #FFD700 0%, #10B981 25%, #34D399 50%, #FFD700 75%, #10B981 100%)',
+                  backgroundSize: '200% 200%',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  filter: 'drop-shadow(0 0 30px rgba(16, 185, 129, 0.8)) drop-shadow(0 0 60px rgba(16, 185, 129, 0.5))',
-                  textShadow: '0 0 40px rgba(16, 185, 129, 0.8)',
+                  animation: 'gradient-shift 0.5s ease infinite',
                 }}
               >
                 CORRECT!
-              </h1>
+              </motion.h1>
 
-              {/* 보너스 포인트 */}
+              {/* 보너스 포인트 - 더 크게 */}
               <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="mt-4"
+                initial={{ y: 30, opacity: 0, scale: 0 }}
+                animate={{ y: 0, opacity: 1, scale: [0, 1.5, 1.2] }}
+                transition={{ delay: 0.3, type: "spring" }}
+                className="mt-6"
               >
-                <span className="text-3xl md:text-4xl font-bold text-yellow-400"
-                  style={{ textShadow: '0 0 20px rgba(250, 204, 21, 0.8)' }}
+                <motion.span
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 0.3, repeat: 5 }}
+                  className="text-4xl md:text-6xl font-black text-yellow-400 drop-shadow-lg"
+                  style={{
+                    textShadow: '0 0 30px #FFD700, 0 0 60px #FFD700, 0 4px 0 #B8860B',
+                  }}
                 >
                   +{bonusPoints || 10} pts
-                </span>
+                </motion.span>
               </motion.div>
 
               {/* 플레이어 이름 */}
               {playerName && (
                 <motion.div
-                  initial={{ y: 20, opacity: 0 }}
+                  initial={{ y: 30, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.5 }}
-                  className="mt-2 text-xl text-white/80"
+                  className="mt-4 text-2xl md:text-3xl font-bold text-white"
+                  style={{ textShadow: '0 0 20px rgba(255,255,255,0.8)' }}
                 >
-                  {playerName} 🎉
+                  🎊 {playerName} 🎊
                 </motion.div>
               )}
             </div>
           </motion.div>
 
-          {/* 방사형 광선 효과 */}
+          {/* 방사형 광선 효과 - 더 많이 */}
           <motion.div
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: [0, 3], opacity: [0.8, 0] }}
-            transition={{ duration: 1 }}
+            initial={{ scale: 0, opacity: 0, rotate: 0 }}
+            animate={{ scale: [0, 4], opacity: [1, 0], rotate: 45 }}
+            transition={{ duration: 1.2 }}
             className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[99] pointer-events-none"
           >
-            {[...Array(12)].map((_, i) => (
+            {[...Array(24)].map((_, i) => (
               <motion.div
                 key={i}
-                className="absolute w-2 h-40 bg-gradient-to-t from-green-500 to-transparent origin-bottom"
+                className="absolute w-3 h-60 origin-bottom"
                 style={{
-                  transform: `rotate(${i * 30}deg)`,
+                  transform: `rotate(${i * 15}deg)`,
                   left: '50%',
                   bottom: '50%',
+                  background: i % 2 === 0
+                    ? 'linear-gradient(to top, #FFD700, transparent)'
+                    : 'linear-gradient(to top, #10B981, transparent)',
                 }}
               />
             ))}
           </motion.div>
 
-          {/* 별 파티클 */}
-          {[...Array(20)].map((_, i) => (
+          {/* 별/이모지 폭발 - 더 많이 */}
+          {[...Array(40)].map((_, i) => (
             <motion.div
               key={`star-${i}`}
               initial={{
@@ -799,17 +855,45 @@ const CorrectImpactEffect: React.FC<{
               animate={{
                 x: `${Math.random() * 100}vw`,
                 y: `${Math.random() * 100}vh`,
-                scale: [0, 1.5, 0],
+                scale: [0, 2, 0],
                 opacity: [1, 1, 0],
-                rotate: [0, 360],
+                rotate: [0, 720],
               }}
               transition={{
-                duration: 1 + Math.random() * 0.5,
-                delay: Math.random() * 0.2,
+                duration: 1.5 + Math.random() * 0.5,
+                delay: Math.random() * 0.4,
               }}
-              className="fixed z-[102] pointer-events-none text-2xl md:text-4xl"
+              className="fixed z-[102] pointer-events-none text-3xl md:text-5xl"
             >
-              {['⭐', '✨', '🌟', '💫'][Math.floor(Math.random() * 4)]}
+              {['⭐', '✨', '🌟', '💫', '🎉', '🎊', '🏆', '💯', '🔥'][Math.floor(Math.random() * 9)]}
+            </motion.div>
+          ))}
+
+          {/* 코인 폭발 효과 */}
+          {[...Array(15)].map((_, i) => (
+            <motion.div
+              key={`coin-${i}`}
+              initial={{
+                x: '50vw',
+                y: '40vh',
+                scale: 0,
+                rotateY: 0,
+              }}
+              animate={{
+                x: `${30 + Math.random() * 40}vw`,
+                y: [`40vh`, `${20 + Math.random() * 20}vh`, `${70 + Math.random() * 20}vh`],
+                scale: [0, 1, 1, 0],
+                rotateY: [0, 360, 720, 1080],
+              }}
+              transition={{
+                duration: 1.5,
+                delay: i * 0.05,
+                times: [0, 0.3, 0.7, 1],
+              }}
+              className="fixed z-[102] pointer-events-none text-4xl"
+              style={{ perspective: '1000px' }}
+            >
+              🪙
             </motion.div>
           ))}
         </>
@@ -820,40 +904,101 @@ const CorrectImpactEffect: React.FC<{
 
 // 오답 임팩트 효과 컴포넌트
 const WrongImpactEffect: React.FC<{ isVisible: boolean }> = ({ isVisible }) => {
+  useEffect(() => {
+    if (isVisible) {
+      playSound('buzzer', 0.8);
+      setTimeout(() => playSound('explosion', 0.5), 100);
+    }
+  }, [isVisible]);
+
   return (
     <AnimatePresence>
       {isVisible && (
         <>
-          {/* 빨간 플래시 */}
+          {/* 빨간 플래시 - 더 강렬하게 */}
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 0.6, 0] }}
-            transition={{ duration: 0.4 }}
-            className="fixed inset-0 z-[100] pointer-events-none bg-red-600"
+            animate={{ opacity: [0, 0.9, 0.7, 0.8, 0] }}
+            transition={{ duration: 0.5, times: [0, 0.1, 0.2, 0.3, 1] }}
+            className="fixed inset-0 z-[100] pointer-events-none"
+            style={{
+              background: 'radial-gradient(circle at center, rgba(239, 68, 68, 0.95) 0%, rgba(127, 29, 29, 0.8) 50%, rgba(0,0,0,0.5) 100%)',
+            }}
           />
+
+          {/* X 마크 폭발 */}
+          <motion.div
+            initial={{ scale: 0, rotate: -45 }}
+            animate={{
+              scale: [0, 1.5, 1.2],
+              rotate: [-45, 0, 0],
+            }}
+            transition={{ duration: 0.4, type: "spring" }}
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] pointer-events-none"
+          >
+            <div className="relative">
+              <motion.i
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 0.2, repeat: 3 }}
+                className="fa-solid fa-xmark text-[200px] md:text-[300px] text-red-500"
+                style={{
+                  filter: 'drop-shadow(0 0 40px rgba(239, 68, 68, 1)) drop-shadow(0 0 80px rgba(239, 68, 68, 0.8))',
+                }}
+              />
+            </div>
+          </motion.div>
 
           {/* WRONG 텍스트 */}
           <motion.div
-            initial={{ scale: 2, opacity: 0 }}
+            initial={{ scale: 3, opacity: 0 }}
             animate={{
-              scale: [2, 0.8, 1],
-              opacity: [0, 1, 1],
-              x: [0, -10, 10, -10, 10, 0],
+              scale: [3, 0.8, 1, 0.95, 1],
+              opacity: [0, 1, 1, 1, 1],
+              x: [0, -20, 20, -15, 15, -10, 10, 0],
             }}
             exit={{ scale: 0, opacity: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.6 }}
             className="fixed inset-0 z-[101] flex items-center justify-center pointer-events-none"
+            style={{ marginTop: '200px' }}
           >
-            <h1
-              className="text-5xl md:text-7xl font-fredoka font-black text-red-500"
-              style={{
-                filter: 'drop-shadow(0 0 20px rgba(239, 68, 68, 0.8))',
-                textShadow: '0 0 30px rgba(239, 68, 68, 0.8)',
+            <motion.h1
+              animate={{
+                textShadow: [
+                  '0 0 20px #EF4444, 0 0 40px #EF4444',
+                  '0 0 60px #EF4444, 0 0 100px #EF4444',
+                  '0 0 20px #EF4444, 0 0 40px #EF4444',
+                ],
               }}
+              transition={{ duration: 0.2, repeat: 4 }}
+              className="text-5xl md:text-7xl font-fredoka font-black text-red-500"
             >
               WRONG!
-            </h1>
+            </motion.h1>
           </motion.div>
+
+          {/* 깨진 유리 효과 */}
+          {[...Array(12)].map((_, i) => (
+            <motion.div
+              key={`crack-${i}`}
+              initial={{
+                x: '50vw',
+                y: '50vh',
+                scale: 0,
+                opacity: 1,
+              }}
+              animate={{
+                x: `${20 + Math.random() * 60}vw`,
+                y: `${20 + Math.random() * 60}vh`,
+                scale: [0, 1],
+                opacity: [1, 0],
+                rotate: Math.random() * 360,
+              }}
+              transition={{ duration: 0.8, delay: Math.random() * 0.2 }}
+              className="fixed z-[99] pointer-events-none text-4xl"
+            >
+              💥
+            </motion.div>
+          ))}
         </>
       )}
     </AnimatePresence>

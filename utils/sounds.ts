@@ -15,6 +15,17 @@ const SFX = {
   critical: 'https://assets.mixkit.co/active_storage/sfx/2020/2020-preview.mp3',
   win: 'https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3',
   countdown: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3',
+  // 퀴즈쇼 사운드
+  correct: 'https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3',
+  tick: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3',
+  buzzer: 'https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3',
+  explosion: 'https://assets.mixkit.co/active_storage/sfx/2803/2803-preview.mp3',
+  tada: 'https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3',
+  drumroll: 'https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3',
+  applause: 'https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3',
+  levelUp: 'https://assets.mixkit.co/active_storage/sfx/2020/2020-preview.mp3',
+  whoosh: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3',
+  ding: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3',
 };
 
 export const playSound = (name: keyof typeof SFX, volume = 0.4) => {

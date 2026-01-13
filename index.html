@@ -75,6 +75,40 @@
         .screen-shake {
           animation: screen-shake 0.4s ease-in-out;
         }
+        /* 퀴즈쇼 그라데이션 애니메이션 */
+        @keyframes gradient-shift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        .animate-shimmer {
+          animation: shimmer 2s infinite;
+        }
+        @keyframes pulse-glow {
+          0%, 100% { box-shadow: 0 0 20px currentColor, 0 0 40px currentColor; }
+          50% { box-shadow: 0 0 40px currentColor, 0 0 80px currentColor, 0 0 120px currentColor; }
+        }
+        .animate-pulse-glow {
+          animation: pulse-glow 1s infinite;
+        }
+        @keyframes bounce-scale {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.2); }
+        }
+        .animate-bounce-scale {
+          animation: bounce-scale 0.5s infinite;
+        }
+        @keyframes flash-white {
+          0%, 100% { opacity: 0; }
+          50% { opacity: 1; }
+        }
+        .animate-flash {
+          animation: flash-white 0.1s ease-out 3;
+        }
     </style>
 </head>
 <body>

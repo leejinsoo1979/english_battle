@@ -62,28 +62,28 @@ const WORD_IMAGES: Record<string, string> = {
   that: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/500px-Camponotus_flavomarginatus_ant.jpg',
 };
 
-// 확실한 단어-이미지 세트 (Pexels 직접 링크 - 100% 작동 보장)
+// 확실한 단어-이미지 세트 (문장과 이미지가 정확히 일치)
 const WORD_IMAGE_PAIRS = [
-  { word: 'cat', sentence: 'The ____ is sleeping.', image: 'https://images.pexels.com/photos/45201/kitty-cat-kitten-pet-45201.jpeg?w=500', rule: 'Short A' },
-  { word: 'dog', sentence: 'The ____ is running.', image: 'https://images.pexels.com/photos/1805164/pexels-photo-1805164.jpeg?w=500', rule: 'Short O' },
+  { word: 'cat', sentence: 'The ____ is cute.', image: 'https://images.pexels.com/photos/45201/kitty-cat-kitten-pet-45201.jpeg?w=500', rule: 'Short A' },
+  { word: 'dog', sentence: 'I have a ____.', image: 'https://images.pexels.com/photos/1805164/pexels-photo-1805164.jpeg?w=500', rule: 'Short O' },
   { word: 'pig', sentence: 'The ____ is pink.', image: 'https://images.pexels.com/photos/1300361/pexels-photo-1300361.jpeg?w=500', rule: 'Short I' },
-  { word: 'sun', sentence: 'The ____ is bright.', image: 'https://images.pexels.com/photos/301599/pexels-photo-301599.jpeg?w=500', rule: 'Short U' },
-  { word: 'cup', sentence: 'I drink from a ____.', image: 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?w=500', rule: 'Short U' },
-  { word: 'bus', sentence: 'The ____ is yellow.', image: 'https://images.pexels.com/photos/385998/pexels-photo-385998.jpeg?w=500', rule: 'Short U' },
-  { word: 'fox', sentence: 'The ____ is clever.', image: 'https://images.pexels.com/photos/247399/pexels-photo-247399.jpeg?w=500', rule: 'Short O' },
-  { word: 'box', sentence: 'Open the ____.', image: 'https://images.pexels.com/photos/6214476/pexels-photo-6214476.jpeg?w=500', rule: 'Short O' },
-  { word: 'ball', sentence: 'Kick the ____.', image: 'https://images.pexels.com/photos/47730/the-ball-stadion-football-the-pitch-47730.jpeg?w=500', rule: 'Double Letters' },
-  { word: 'fish', sentence: 'The ____ swims.', image: 'https://images.pexels.com/photos/128756/pexels-photo-128756.jpeg?w=500', rule: 'Digraph SH' },
-  { word: 'ship', sentence: 'The ____ sails.', image: 'https://images.pexels.com/photos/813011/pexels-photo-813011.jpeg?w=500', rule: 'Digraph SH' },
-  { word: 'bed', sentence: 'Sleep in the ____.', image: 'https://images.pexels.com/photos/1034584/pexels-photo-1034584.jpeg?w=500', rule: 'Short E' },
-  { word: 'pen', sentence: 'Write with a ____.', image: 'https://images.pexels.com/photos/3631711/pexels-photo-3631711.jpeg?w=500', rule: 'Short E' },
-  { word: 'hat', sentence: 'Wear a ____.', image: 'https://images.pexels.com/photos/984619/pexels-photo-984619.jpeg?w=500', rule: 'Short A' },
-  { word: 'egg', sentence: 'Eat an ____.', image: 'https://images.pexels.com/photos/162712/egg-white-food-protein-162712.jpeg?w=500', rule: 'Short E' },
-  { word: 'car', sentence: 'Drive the ____.', image: 'https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg?w=500', rule: 'Short A' },
-  { word: 'map', sentence: 'Read the ____.', image: 'https://images.pexels.com/photos/592753/pexels-photo-592753.jpeg?w=500', rule: 'Short A' },
-  { word: 'hen', sentence: 'The ____ lays eggs.', image: 'https://images.pexels.com/photos/195226/pexels-photo-195226.jpeg?w=500', rule: 'Short E' },
-  { word: 'nut', sentence: 'Eat a ____.', image: 'https://images.pexels.com/photos/86649/pexels-photo-86649.jpeg?w=500', rule: 'Short U' },
-  { word: 'bag', sentence: 'Carry a ____.', image: 'https://images.pexels.com/photos/1152077/pexels-photo-1152077.jpeg?w=500', rule: 'Short A' },
+  { word: 'sun', sentence: 'The ____ is in the sky.', image: 'https://images.pexels.com/photos/301599/pexels-photo-301599.jpeg?w=500', rule: 'Short U' },
+  { word: 'cup', sentence: 'This is a ____.', image: 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?w=500', rule: 'Short U' },
+  { word: 'bus', sentence: 'The ____ is big.', image: 'https://images.pexels.com/photos/385998/pexels-photo-385998.jpeg?w=500', rule: 'Short U' },
+  { word: 'fox', sentence: 'The ____ is orange.', image: 'https://images.pexels.com/photos/247399/pexels-photo-247399.jpeg?w=500', rule: 'Short O' },
+  { word: 'box', sentence: 'This is a ____.', image: 'https://images.pexels.com/photos/6214476/pexels-photo-6214476.jpeg?w=500', rule: 'Short O' },
+  { word: 'ball', sentence: 'I see a ____.', image: 'https://images.pexels.com/photos/47730/the-ball-stadion-football-the-pitch-47730.jpeg?w=500', rule: 'Double Letters' },
+  { word: 'fish', sentence: 'The ____ is in water.', image: 'https://images.pexels.com/photos/128756/pexels-photo-128756.jpeg?w=500', rule: 'Digraph SH' },
+  { word: 'ship', sentence: 'The ____ is on the sea.', image: 'https://images.pexels.com/photos/813011/pexels-photo-813011.jpeg?w=500', rule: 'Digraph SH' },
+  { word: 'bed', sentence: 'This is a ____.', image: 'https://images.pexels.com/photos/1034584/pexels-photo-1034584.jpeg?w=500', rule: 'Short E' },
+  { word: 'pen', sentence: 'I have a ____.', image: 'https://images.pexels.com/photos/3631711/pexels-photo-3631711.jpeg?w=500', rule: 'Short E' },
+  { word: 'hat', sentence: 'This is a ____.', image: 'https://images.pexels.com/photos/984619/pexels-photo-984619.jpeg?w=500', rule: 'Short A' },
+  { word: 'egg', sentence: 'This is an ____.', image: 'https://images.pexels.com/photos/162712/egg-white-food-protein-162712.jpeg?w=500', rule: 'Short E' },
+  { word: 'car', sentence: 'The ____ is red.', image: 'https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg?w=500', rule: 'Short A' },
+  { word: 'map', sentence: 'I see a ____.', image: 'https://images.pexels.com/photos/592753/pexels-photo-592753.jpeg?w=500', rule: 'Short A' },
+  { word: 'hen', sentence: 'The ____ is brown.', image: 'https://images.pexels.com/photos/195226/pexels-photo-195226.jpeg?w=500', rule: 'Short E' },
+  { word: 'nut', sentence: 'This is a ____.', image: 'https://images.pexels.com/photos/86649/pexels-photo-86649.jpeg?w=500', rule: 'Short U' },
+  { word: 'bag', sentence: 'I have a ____.', image: 'https://images.pexels.com/photos/1152077/pexels-photo-1152077.jpeg?w=500', rule: 'Short A' },
 ];
 
 // Phonics rules
