@@ -902,108 +902,6 @@ const CorrectImpactEffect: React.FC<{
   );
 };
 
-// 오답 임팩트 효과 컴포넌트
-const WrongImpactEffect: React.FC<{ isVisible: boolean }> = ({ isVisible }) => {
-  useEffect(() => {
-    if (isVisible) {
-      playSound('buzzer', 0.8);
-      setTimeout(() => playSound('explosion', 0.5), 100);
-    }
-  }, [isVisible]);
-
-  return (
-    <AnimatePresence>
-      {isVisible && (
-        <>
-          {/* 빨간 플래시 - 더 강렬하게 */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 0.9, 0.7, 0.8, 0] }}
-            transition={{ duration: 0.5, times: [0, 0.1, 0.2, 0.3, 1] }}
-            className="fixed inset-0 z-[100] pointer-events-none"
-            style={{
-              background: 'radial-gradient(circle at center, rgba(239, 68, 68, 0.95) 0%, rgba(127, 29, 29, 0.8) 50%, rgba(0,0,0,0.5) 100%)',
-            }}
-          />
-
-          {/* X 마크 폭발 */}
-          <motion.div
-            initial={{ scale: 0, rotate: -45 }}
-            animate={{
-              scale: [0, 1.5, 1.2],
-              rotate: [-45, 0, 0],
-            }}
-            transition={{ duration: 0.4, type: "spring" }}
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] pointer-events-none"
-          >
-            <div className="relative">
-              <motion.i
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 0.2, repeat: 3 }}
-                className="fa-solid fa-xmark text-[200px] md:text-[300px] text-red-500"
-                style={{
-                  filter: 'drop-shadow(0 0 40px rgba(239, 68, 68, 1)) drop-shadow(0 0 80px rgba(239, 68, 68, 0.8))',
-                }}
-              />
-            </div>
-          </motion.div>
-
-          {/* WRONG 텍스트 */}
-          <motion.div
-            initial={{ scale: 3, opacity: 0 }}
-            animate={{
-              scale: [3, 0.8, 1, 0.95, 1],
-              opacity: [0, 1, 1, 1, 1],
-              x: [0, -20, 20, -15, 15, -10, 10, 0],
-            }}
-            exit={{ scale: 0, opacity: 0 }}
-            transition={{ duration: 0.6 }}
-            className="fixed inset-0 z-[101] flex items-center justify-center pointer-events-none"
-            style={{ marginTop: '200px' }}
-          >
-            <motion.h1
-              animate={{
-                textShadow: [
-                  '0 0 20px #EF4444, 0 0 40px #EF4444',
-                  '0 0 60px #EF4444, 0 0 100px #EF4444',
-                  '0 0 20px #EF4444, 0 0 40px #EF4444',
-                ],
-              }}
-              transition={{ duration: 0.2, repeat: 4 }}
-              className="text-5xl md:text-7xl font-fredoka font-black text-red-500"
-            >
-              WRONG!
-            </motion.h1>
-          </motion.div>
-
-          {/* 깨진 유리 효과 */}
-          {[...Array(12)].map((_, i) => (
-            <motion.div
-              key={`crack-${i}`}
-              initial={{
-                x: '50vw',
-                y: '50vh',
-                scale: 0,
-                opacity: 1,
-              }}
-              animate={{
-                x: `${20 + Math.random() * 60}vw`,
-                y: `${20 + Math.random() * 60}vh`,
-                scale: [0, 1],
-                opacity: [1, 0],
-                rotate: Math.random() * 360,
-              }}
-              transition={{ duration: 0.8, delay: Math.random() * 0.2 }}
-              className="fixed z-[99] pointer-events-none text-4xl"
-            >
-              💥
-            </motion.div>
-          ))}
-        </>
-      )}
-    </AnimatePresence>
-  );
-};
 
 // 스크린 쉐이크 래퍼
 const ScreenShake: React.FC<{
@@ -1061,7 +959,6 @@ const QuizShowScreen: React.FC<Props> = ({ onExit, playerCount = 4 }) => {
   const [activePlayer, setActivePlayer] = useState<number | null>(null);
   const [showGameResult, setShowGameResult] = useState(false);
   const [showCorrectEffect, setShowCorrectEffect] = useState(false);
-  const [showWrongEffect, setShowWrongEffect] = useState(false);
   const [isScreenShaking, setIsScreenShaking] = useState(false);
   const [lastBonusPoints, setLastBonusPoints] = useState(0);
 
@@ -1180,17 +1077,8 @@ const QuizShowScreen: React.FC<Props> = ({ onExit, playerCount = 4 }) => {
         setShowCorrectEffect(false);
         setIsScreenShaking(false);
       }, 2000);
-    } else {
-      // 오답 효과
-      playSound('wrong', 0.6);
-      setShowWrongEffect(true);
-      setIsScreenShaking(true);
-
-      setTimeout(() => {
-        setShowWrongEffect(false);
-        setIsScreenShaking(false);
-      }, 1000);
     }
+    // 오답 시에는 아무 효과 없이 조용히 넘어감
 
     // 다음 문제로
     setTimeout(() => {
@@ -1279,7 +1167,6 @@ const QuizShowScreen: React.FC<Props> = ({ onExit, playerCount = 4 }) => {
         playerName={correctPlayerName}
         bonusPoints={lastBonusPoints}
       />
-      <WrongImpactEffect isVisible={showWrongEffect} />
       {/* 배경 효과 */}
       <LEDBackground isCorrect={correctOption !== null && selectedOption === correctOption} isWrong={correctOption !== null && selectedOption !== correctOption} />
       <StudioLights />
