@@ -176,39 +176,37 @@ const QuizScreen: React.FC<Props> = ({ level, onComplete }) => {
         </AnimatePresence>
 
         <div className="flex flex-col items-center justify-center space-y-2 w-full">
+          {/* Countdown - Above Image */}
+          {!isWordCorrect && (
+            <motion.div
+              key={countdown}
+              initial={{ scale: 1.2, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className={`w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center shadow-2xl ${
+                countdown <= 5
+                  ? 'bg-red-500 animate-pulse'
+                  : countdown <= 10
+                    ? 'bg-orange-500'
+                    : 'bg-gradient-to-br from-gray-700 to-gray-900'
+              }`}
+            >
+              <span className="text-4xl md:text-5xl font-bold font-fredoka text-white">
+                {countdown}
+              </span>
+            </motion.div>
+          )}
+
           {/* Image */}
           <div className="relative group">
             <motion.div
               animate={isWordCorrect ? { scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] } : {}}
               transition={{ repeat: Infinity, duration: 2 }}
-              className="relative"
             >
               <img
                 src={level.imageHint}
                 alt="Hint"
                 className={`w-80 h-80 md:w-[420px] md:h-[420px] object-cover rounded-3xl border-4 ${isWordCorrect ? 'border-teal-400' : 'border-orange-200'} shadow-xl transition-all`}
               />
-              {/* Countdown Overlay */}
-              {!isWordCorrect && (
-                <motion.div
-                  key={countdown}
-                  initial={{ scale: 1.2, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className={`absolute top-4 left-1/2 -translate-x-1/2 w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center shadow-2xl ${
-                    countdown <= 5
-                      ? 'bg-red-500 animate-pulse'
-                      : countdown <= 10
-                        ? 'bg-orange-500'
-                        : 'bg-black/60 backdrop-blur-sm'
-                  }`}
-                >
-                  <span className={`text-4xl md:text-5xl font-bold font-fredoka ${
-                    countdown <= 10 ? 'text-white' : 'text-white'
-                  }`}>
-                    {countdown}
-                  </span>
-                </motion.div>
-              )}
             </motion.div>
             <button
               onClick={() => { playSound('pop'); speak(level.targetWord); }}
