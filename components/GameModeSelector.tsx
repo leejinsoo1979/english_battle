@@ -7,44 +7,50 @@ interface GameModeOption {
   name: string;
   description: string;
   icon: string;
-  color: string;
+  gradient: string;
+  shadowColor: string;
 }
 
 const GAME_MODES: GameModeOption[] = [
   {
     type: 'random',
-    name: '랜덤 모드',
-    description: '매 라운드 다른 게임이 랜덤으로!',
-    icon: 'fa-dice',
-    color: 'from-yellow-500 to-orange-500',
+    name: 'RANDOM',
+    description: '매 라운드 새로운 도전',
+    icon: 'fa-random',
+    gradient: 'from-amber-500 via-orange-500 to-red-500',
+    shadowColor: 'rgba(251, 146, 60, 0.4)',
   },
   {
     type: 'fill-blank',
-    name: '빈칸 채우기',
-    description: '문장의 빈칸에 들어갈 단어를 맞추세요',
-    icon: 'fa-pen',
-    color: 'from-orange-500 to-red-500',
+    name: 'FILL IN',
+    description: '빈칸을 채워라',
+    icon: 'fa-i-cursor',
+    gradient: 'from-rose-500 via-pink-500 to-fuchsia-500',
+    shadowColor: 'rgba(236, 72, 153, 0.4)',
   },
   {
     type: 'speed-typing',
-    name: '스피드 타이핑',
-    description: '화면에 보이는 단어를 빠르게 타이핑!',
-    icon: 'fa-keyboard',
-    color: 'from-green-500 to-emerald-500',
+    name: 'SPEED',
+    description: '빠르게 타이핑',
+    icon: 'fa-bolt',
+    gradient: 'from-emerald-400 via-green-500 to-teal-500',
+    shadowColor: 'rgba(16, 185, 129, 0.4)',
   },
   {
     type: 'scramble',
-    name: '단어 스크램블',
-    description: '섞인 글자를 드래그해서 단어 완성',
-    icon: 'fa-shuffle',
-    color: 'from-purple-500 to-pink-500',
+    name: 'SCRAMBLE',
+    description: '섞인 글자를 맞춰라',
+    icon: 'fa-arrows-rotate',
+    gradient: 'from-violet-500 via-purple-500 to-indigo-500',
+    shadowColor: 'rgba(139, 92, 246, 0.4)',
   },
   {
     type: 'listening',
-    name: '듣고 맞추기',
-    description: '영어 발음을 듣고 단어를 입력하세요',
-    icon: 'fa-headphones',
-    color: 'from-cyan-500 to-blue-500',
+    name: 'LISTEN',
+    description: '듣고 입력하라',
+    icon: 'fa-volume-high',
+    gradient: 'from-cyan-400 via-sky-500 to-blue-500',
+    shadowColor: 'rgba(14, 165, 233, 0.4)',
   },
 ];
 
@@ -55,6 +61,7 @@ interface Props {
 
 const GameModeSelector: React.FC<Props> = ({ onSelect, onBack }) => {
   const [selectedMode, setSelectedMode] = useState<VersusGameType | 'random' | null>(null);
+  const [hoveredMode, setHoveredMode] = useState<VersusGameType | 'random' | null>(null);
 
   const handleStart = () => {
     if (selectedMode) {
@@ -63,120 +70,185 @@ const GameModeSelector: React.FC<Props> = ({ onSelect, onBack }) => {
   };
 
   return (
-    <div className="h-full w-full relative overflow-hidden" style={{ backgroundColor: '#0f0f1a' }}>
-      {/* 배경 장식 */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-orange-500/5 rounded-full blur-3xl" />
-      </div>
+    <div className="h-full w-full relative overflow-hidden bg-[#0a0a12]">
+      {/* 배경 그리드 패턴 */}
+      <div
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                           linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+          backgroundSize: '50px 50px',
+        }}
+      />
+
+      {/* 글로우 효과 */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-purple-600/10 rounded-full blur-[120px]" />
+      <div className="absolute bottom-0 left-1/4 w-[400px] h-[300px] bg-blue-600/10 rounded-full blur-[100px]" />
+      <div className="absolute bottom-0 right-1/4 w-[400px] h-[300px] bg-orange-600/10 rounded-full blur-[100px]" />
 
       {/* 뒤로가기 버튼 */}
       <button
         onClick={onBack}
-        className="absolute top-6 left-6 z-20 w-12 h-12 bg-white/10 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center text-gray-300 hover:text-white hover:bg-white/20 transition-all hover:scale-110"
+        className="absolute top-6 left-6 z-20 w-12 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all duration-300"
       >
-        <i className="fa-solid fa-arrow-left text-xl"></i>
+        <i className="fa-solid fa-chevron-left text-lg"></i>
       </button>
 
       {/* 메인 컨텐츠 */}
-      <div className="h-full flex flex-col items-center justify-center px-6 py-12">
+      <div className="h-full flex flex-col items-center justify-center px-6 py-8">
         {/* 제목 */}
         <motion.div
-          initial={{ y: -30, opacity: 0 }}
+          initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="text-center mb-8"
+          className="text-center mb-10"
         >
-          <h1 className="text-4xl md:text-5xl font-fredoka text-white mb-2">
-            게임 모드 선택
+          <h1 className="text-5xl md:text-6xl font-fredoka tracking-tight">
+            <span className="text-white">SELECT </span>
+            <span className="bg-gradient-to-r from-orange-400 via-pink-500 to-purple-500 bg-clip-text text-transparent">
+              MODE
+            </span>
           </h1>
-          <p className="text-gray-400 text-lg">
-            원하는 게임 모드를 선택하세요
-          </p>
+          <div className="mt-3 h-[2px] w-32 mx-auto bg-gradient-to-r from-transparent via-white/30 to-transparent" />
         </motion.div>
 
-        {/* 게임 모드 그리드 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl w-full mb-8">
-          {GAME_MODES.map((mode, index) => (
-            <motion.button
-              key={mode.type}
-              initial={{ y: 30, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: index * 0.1 }}
-              onClick={() => setSelectedMode(mode.type)}
-              className={`relative p-6 rounded-2xl border-2 transition-all duration-300 ${
-                selectedMode === mode.type
-                  ? 'border-white bg-white/10 scale-105 shadow-2xl'
-                  : 'border-gray-700 bg-gray-800/50 hover:border-gray-500 hover:bg-gray-800'
-              }`}
-            >
-              {/* 선택 표시 */}
-              {selectedMode === mode.type && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg"
-                >
-                  <i className="fa-solid fa-check text-white text-sm"></i>
-                </motion.div>
-              )}
+        {/* 게임 모드 카드 */}
+        <div className="flex flex-wrap justify-center gap-4 max-w-5xl w-full mb-10">
+          {GAME_MODES.map((mode, index) => {
+            const isSelected = selectedMode === mode.type;
+            const isHovered = hoveredMode === mode.type;
 
-              {/* 아이콘 */}
-              <div
-                className={`w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center bg-gradient-to-br ${mode.color}`}
+            return (
+              <motion.button
+                key={mode.type}
+                initial={{ y: 30, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: index * 0.08, type: 'spring', stiffness: 200 }}
+                onClick={() => setSelectedMode(mode.type)}
+                onMouseEnter={() => setHoveredMode(mode.type)}
+                onMouseLeave={() => setHoveredMode(null)}
+                className={`relative w-40 h-48 rounded-2xl transition-all duration-300 ${
+                  isSelected
+                    ? 'scale-105'
+                    : 'hover:scale-[1.02]'
+                }`}
+                style={{
+                  boxShadow: isSelected || isHovered
+                    ? `0 20px 40px -10px ${mode.shadowColor}, 0 0 60px -20px ${mode.shadowColor}`
+                    : 'none',
+                }}
               >
-                <i className={`fa-solid ${mode.icon} text-2xl text-white`}></i>
-              </div>
+                {/* 카드 배경 */}
+                <div className={`absolute inset-0 rounded-2xl transition-all duration-300 ${
+                  isSelected
+                    ? `bg-gradient-to-br ${mode.gradient} opacity-100`
+                    : 'bg-white/5 border border-white/10'
+                }`} />
 
-              {/* 제목 */}
-              <h3 className="text-xl font-bold text-white mb-2">{mode.name}</h3>
+                {/* 선택 시 테두리 글로우 */}
+                {isSelected && (
+                  <div className={`absolute -inset-[2px] rounded-2xl bg-gradient-to-br ${mode.gradient} opacity-50 blur-sm`} />
+                )}
 
-              {/* 설명 */}
-              <p className="text-gray-400 text-sm">{mode.description}</p>
+                {/* 카드 내용 */}
+                <div className="relative h-full flex flex-col items-center justify-center p-4">
+                  {/* 아이콘 */}
+                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 transition-all duration-300 ${
+                    isSelected
+                      ? 'bg-white/20'
+                      : `bg-gradient-to-br ${mode.gradient}`
+                  }`}>
+                    <i className={`fa-solid ${mode.icon} text-2xl text-white`}></i>
+                  </div>
 
-              {/* 랜덤 모드 뱃지 */}
-              {mode.type === 'random' && (
-                <div className="absolute top-3 left-3 px-2 py-1 bg-yellow-500 text-yellow-900 text-xs font-bold rounded-full">
-                  추천
+                  {/* 타이틀 */}
+                  <h3 className={`text-lg font-bold tracking-wide transition-colors duration-300 ${
+                    isSelected ? 'text-white' : 'text-gray-200'
+                  }`}>
+                    {mode.name}
+                  </h3>
+
+                  {/* 설명 */}
+                  <p className={`text-xs mt-2 text-center transition-colors duration-300 ${
+                    isSelected ? 'text-white/80' : 'text-gray-500'
+                  }`}>
+                    {mode.description}
+                  </p>
+
+                  {/* RECOMMENDED 뱃지 */}
+                  {mode.type === 'random' && (
+                    <div className="absolute -top-2 -right-2 px-2 py-1 bg-white text-[10px] font-bold text-gray-900 rounded-full shadow-lg">
+                      HOT
+                    </div>
+                  )}
+
+                  {/* 선택 체크 */}
+                  {isSelected && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute top-3 right-3 w-6 h-6 bg-white rounded-full flex items-center justify-center"
+                    >
+                      <i className="fa-solid fa-check text-xs text-gray-900"></i>
+                    </motion.div>
+                  )}
                 </div>
-              )}
-            </motion.button>
-          ))}
+              </motion.button>
+            );
+          })}
         </div>
 
         {/* 시작 버튼 */}
         <motion.button
-          initial={{ y: 30, opacity: 0 }}
+          initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.5 }}
           onClick={handleStart}
           disabled={!selectedMode}
-          className={`w-full max-w-md py-4 rounded-2xl font-bold text-xl transition-all duration-300 ${
+          className={`relative w-72 h-14 rounded-xl font-bold text-lg tracking-wider transition-all duration-300 overflow-hidden ${
             selectedMode
-              ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-400 hover:to-red-400 hover:scale-105 shadow-lg shadow-orange-500/30'
-              : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+              ? 'text-white hover:scale-105'
+              : 'bg-white/5 border border-white/10 text-gray-600 cursor-not-allowed'
           }`}
         >
-          {selectedMode ? (
+          {selectedMode && (
             <>
-              <i className="fa-solid fa-play mr-3"></i>
-              게임 시작!
+              {/* 버튼 그라데이션 배경 */}
+              <div className={`absolute inset-0 bg-gradient-to-r ${
+                GAME_MODES.find(m => m.type === selectedMode)?.gradient || 'from-orange-500 to-red-500'
+              }`} />
+              {/* 호버 오버레이 */}
+              <div className="absolute inset-0 bg-white/0 hover:bg-white/10 transition-colors duration-300" />
             </>
-          ) : (
-            '게임 모드를 선택하세요'
           )}
+          <span className="relative flex items-center justify-center gap-3">
+            {selectedMode ? (
+              <>
+                START
+                <i className="fa-solid fa-arrow-right"></i>
+              </>
+            ) : (
+              'SELECT A MODE'
+            )}
+          </span>
         </motion.button>
 
-        {/* 안내 텍스트 */}
-        <motion.p
+        {/* 하단 안내 */}
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
-          className="mt-6 text-gray-500 text-sm text-center"
+          className="mt-8 flex items-center gap-6 text-gray-600 text-sm"
         >
-          <i className="fa-solid fa-gamepad mr-2"></i>
-          Player 1: Q키 | Player 2: P키로 입력
-        </motion.p>
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs font-bold rounded">Q</span>
+            <span>Player 1</span>
+          </div>
+          <div className="w-px h-4 bg-gray-700" />
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs font-bold rounded">P</span>
+            <span>Player 2</span>
+          </div>
+        </motion.div>
       </div>
     </div>
   );

@@ -10,9 +10,10 @@ import confetti from 'canvas-confetti';
 interface Props {
   level: QuizLevel;
   onComplete: (score: number) => void;
+  onSkip?: () => void;
 }
 
-const QuizScreen: React.FC<Props> = ({ level, onComplete }) => {
+const QuizScreen: React.FC<Props> = ({ level, onComplete, onSkip }) => {
   const [placedLetters, setPlacedLetters] = useState<(string | null)[]>(
     new Array(level.targetWord.length).fill(null)
   );
@@ -274,11 +275,28 @@ const QuizScreen: React.FC<Props> = ({ level, onComplete }) => {
         </AnimatePresence>
       </div>
 
-      {/* Status Bar */}
-      <div className={`w-full py-3 rounded-xl text-white font-fredoka text-base text-center shadow-lg transition-all mt-4 ${
-          isWordCorrect ? 'bg-teal-400 scale-105' : 'bg-gray-300'
-        }`}>
-        {isWordCorrect ? 'AMAZING! GOING TO NEXT...' : 'TYPE OR DRAG BLOCKS!'}
+      {/* Status Bar & Skip Button */}
+      <div className="w-full flex gap-2 mt-4">
+        {/* Skip Button */}
+        {!isWordCorrect && onSkip && (
+          <button
+            onClick={() => {
+              playSound('pop', 0.2);
+              onSkip();
+            }}
+            className="px-4 py-3 rounded-xl bg-gray-400 hover:bg-gray-500 text-white font-fredoka text-base shadow-lg transition-all hover:scale-105 active:scale-95"
+          >
+            <i className="fa-solid fa-forward mr-2"></i>
+            스킵
+          </button>
+        )}
+
+        {/* Status Bar */}
+        <div className={`flex-1 py-3 rounded-xl text-white font-fredoka text-base text-center shadow-lg transition-all ${
+            isWordCorrect ? 'bg-teal-400 scale-105' : 'bg-gray-300'
+          }`}>
+          {isWordCorrect ? 'AMAZING! GOING TO NEXT...' : 'TYPE OR DRAG BLOCKS!'}
+        </div>
       </div>
     </div>
   );

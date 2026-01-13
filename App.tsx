@@ -615,6 +615,7 @@ const App: React.FC = () => {
           <QuizScreen
             level={currentLevel}
             onComplete={handleLevelComplete}
+            onSkip={() => handleLevelComplete(0)}
           />
         </>
       )}
