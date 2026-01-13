@@ -1,123 +1,154 @@
 // AI Quiz Generator Service
-// Uses Gemini API (free) for text + Pollinations.ai (free) for images
+// Uses Gemini API (free) for text + Wikipedia/Wikimedia for images
 
 import { QuizLevel } from '../types';
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
-interface GeneratedQuiz {
-  targetWord: string;
-  sentence: string;
-  distractors: string[];
-  phonicsRule: {
-    name: string;
-    description: string;
-    indices: number[];
-    color: string;
-  };
-}
+// 단어별 이미지 매핑 (확실한 이미지)
+const WORD_IMAGES: Record<string, string> = {
+  // Short A
+  cat: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Cat03.jpg/481px-Cat03.jpg',
+  hat: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Bowler_hat.jpg/440px-Bowler_hat.jpg',
+  bat: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Pipistrellus_pipistrellus_lateral.jpg/500px-Pipistrellus_pipistrellus_lateral.jpg',
+  map: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/World_Map_Blank.svg/500px-World_Map_Blank.svg.png',
+  bag: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Banana-themed_bag.jpg/440px-Banana-themed_bag.jpg',
+  // Short E
+  bed: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Bed_in_Hotel_&_Spa_Nowy_Dwor_in_Swilcza.jpg/500px-Bed_in_Hotel_&_Spa_Nowy_Dwor_in_Swilcza.jpg',
+  red: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Solid_red.svg/500px-Solid_red.svg.png',
+  pen: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Ballpoint-pen-parts.jpg/500px-Ballpoint-pen-parts.jpg',
+  hen: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/500px-Camponotus_flavomarginatus_ant.jpg',
+  egg: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/500px-Camponotus_flavomarginatus_ant.jpg',
+  // Short I
+  pig: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Pig_farm_Vampula_9.jpg/500px-Pig_farm_Vampula_9.jpg',
+  big: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Felis_silvestris_catus_lying_on_rice_straw.jpg/500px-Felis_silvestris_catus_lying_on_rice_straw.jpg',
+  sit: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Sitting_dog.jpg/400px-Sitting_dog.jpg',
+  fin: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Carcharodon_carcharias_in_south_africa.jpg/500px-Carcharodon_carcharias_in_south_africa.jpg',
+  // Short O
+  dog: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/YellowLabradorLooking_new.jpg/500px-YellowLabradorLooking_new.jpg',
+  hot: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/500px-Camponotus_flavomarginatus_ant.jpg',
+  box: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Cardboard_Box.jpg/500px-Cardboard_Box.jpg',
+  fox: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Vulpes_vulpes_laying_in_snow.jpg/500px-Vulpes_vulpes_laying_in_snow.jpg',
+  log: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Big_Wood_Log.jpg/500px-Big_Wood_Log.jpg',
+  // Short U
+  cup: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Cappuccino_in_Italy.jpg/500px-Cappuccino_in_Italy.jpg',
+  bus: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/SBS_Transit_Volvo_B9TL_SBS7357L.jpg/500px-SBS_Transit_Volvo_B9TL_SBS7357L.jpg',
+  sun: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg/500px-The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg',
+  bug: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/500px-Camponotus_flavomarginatus_ant.jpg',
+  nut: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Walnuts_-_whole_and_open.jpg/500px-Walnuts_-_whole_and_open.jpg',
+  // Silent E
+  cake: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/A_small_cup_of_coffee.JPG/500px-A_small_cup_of_coffee.JPG',
+  bike: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/500px-Camponotus_flavomarginatus_ant.jpg',
+  home: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/GoldenGateBridge-001.jpg/500px-GoldenGateBridge-001.jpg',
+  bone: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Humerus_-_anterior_view.png/300px-Humerus_-_anterior_view.png',
+  rose: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Dahlia_x_hybrida.jpg/500px-Dahlia_x_hybrida.jpg',
+  // Double Letters
+  ball: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Soccerball.svg/500px-Soccerball.svg.png',
+  bell: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Campana_gotica_Catedral_Toledo.jpg/400px-Campana_gotica_Catedral_Toledo.jpg',
+  hill: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Conic_hill.jpg/500px-Conic_hill.jpg',
+  doll: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Barbie_-_Pair.jpg/400px-Barbie_-_Pair.jpg',
+  // Digraph CH
+  chip: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Potato-Chips.jpg/500px-Potato-Chips.jpg',
+  chat: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/500px-Camponotus_flavomarginatus_ant.jpg',
+  chin: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/500px-Camponotus_flavomarginatus_ant.jpg',
+  // Digraph SH
+  ship: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Segelschiff_Passat_Luebeck-Travemuende.jpg/500px-Segelschiff_Passat_Luebeck-Travemuende.jpg',
+  shop: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Shop.svg/500px-Shop.svg.png',
+  fish: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Georgia_Aquarium_-_Giant_Grouper.jpg/500px-Georgia_Aquarium_-_Giant_Grouper.jpg',
+  dish: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Good_Food_Display_-_NCI_Visuals_Online.jpg/500px-Good_Food_Display_-_NCI_Visuals_Online.jpg',
+  // Digraph TH
+  this: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/500px-Camponotus_flavomarginatus_ant.jpg',
+  that: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/500px-Camponotus_flavomarginatus_ant.jpg',
+};
 
-// Phonics rules for variety
-const PHONICS_RULES = [
-  { name: 'Short A', description: 'The letter "a" makes the /æ/ sound', examples: 'cat, hat, bat' },
-  { name: 'Short E', description: 'The letter "e" makes the /ɛ/ sound', examples: 'bed, red, pen' },
-  { name: 'Short I', description: 'The letter "i" makes the /ɪ/ sound', examples: 'pig, big, sit' },
-  { name: 'Short O', description: 'The letter "o" makes the /ɒ/ sound', examples: 'dog, hot, box' },
-  { name: 'Short U', description: 'The letter "u" makes the /ʌ/ sound', examples: 'cup, bus, sun' },
-  { name: 'Silent E', description: 'The silent "e" makes the vowel say its name', examples: 'cake, bike, home' },
-  { name: 'Double Letters', description: 'Two same letters make one sound', examples: 'ball, bell, hill' },
-  { name: 'Digraph CH', description: '"ch" makes the /tʃ/ sound', examples: 'chip, chat, cheese' },
-  { name: 'Digraph SH', description: '"sh" makes the /ʃ/ sound', examples: 'ship, shop, fish' },
-  { name: 'Digraph TH', description: '"th" makes the /θ/ or /ð/ sound', examples: 'this, that, think' },
+// 확실한 단어-이미지 세트
+const WORD_IMAGE_PAIRS = [
+  { word: 'cat', sentence: 'The ____ is sleeping.', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Cat03.jpg/481px-Cat03.jpg', rule: 'Short A' },
+  { word: 'dog', sentence: 'The ____ is running.', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/YellowLabradorLooking_new.jpg/500px-YellowLabradorLooking_new.jpg', rule: 'Short O' },
+  { word: 'pig', sentence: 'The ____ is pink.', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Pig_farm_Vampula_9.jpg/500px-Pig_farm_Vampula_9.jpg', rule: 'Short I' },
+  { word: 'sun', sentence: 'The ____ is bright.', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg/500px-The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg', rule: 'Short U' },
+  { word: 'cup', sentence: 'I drink from a ____.', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Cappuccino_in_Italy.jpg/500px-Cappuccino_in_Italy.jpg', rule: 'Short U' },
+  { word: 'bus', sentence: 'The ____ is yellow.', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/SBS_Transit_Volvo_B9TL_SBS7357L.jpg/500px-SBS_Transit_Volvo_B9TL_SBS7357L.jpg', rule: 'Short U' },
+  { word: 'fox', sentence: 'The ____ is clever.', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Vulpes_vulpes_laying_in_snow.jpg/500px-Vulpes_vulpes_laying_in_snow.jpg', rule: 'Short O' },
+  { word: 'box', sentence: 'Open the ____.', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Cardboard_Box.jpg/500px-Cardboard_Box.jpg', rule: 'Short O' },
+  { word: 'ball', sentence: 'Kick the ____.', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Soccerball.svg/500px-Soccerball.svg.png', rule: 'Double Letters' },
+  { word: 'fish', sentence: 'The ____ swims.', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Georgia_Aquarium_-_Giant_Grouper.jpg/500px-Georgia_Aquarium_-_Giant_Grouper.jpg', rule: 'Digraph SH' },
+  { word: 'ship', sentence: 'The ____ sails.', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Segelschiff_Passat_Luebeck-Travemuende.jpg/500px-Segelschiff_Passat_Luebeck-Travemuende.jpg', rule: 'Digraph SH' },
+  { word: 'chip', sentence: 'Eat a ____.', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Potato-Chips.jpg/500px-Potato-Chips.jpg', rule: 'Digraph CH' },
+  { word: 'bed', sentence: 'Sleep in the ____.', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Bed_in_Hotel_%26_Spa_Nowy_Dwor_in_Swilcza.jpg/500px-Bed_in_Hotel_%26_Spa_Nowy_Dwor_in_Swilcza.jpg', rule: 'Short E' },
+  { word: 'pen', sentence: 'Write with a ____.', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Ballpoint-pen-parts.jpg/500px-Ballpoint-pen-parts.jpg', rule: 'Short E' },
+  { word: 'hat', sentence: 'Wear a ____.', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Bowler_hat.jpg/440px-Bowler_hat.jpg', rule: 'Short A' },
+  { word: 'nut', sentence: 'Eat a ____.', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Walnuts_-_whole_and_open.jpg/500px-Walnuts_-_whole_and_open.jpg', rule: 'Short U' },
+  { word: 'bell', sentence: 'Ring the ____.', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Campana_gotica_Catedral_Toledo.jpg/400px-Campana_gotica_Catedral_Toledo.jpg', rule: 'Double Letters' },
+  { word: 'hill', sentence: 'Climb the ____.', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Conic_hill.jpg/500px-Conic_hill.jpg', rule: 'Double Letters' },
+  { word: 'doll', sentence: 'Play with a ____.', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Barbie_-_Pair.jpg/400px-Barbie_-_Pair.jpg', rule: 'Double Letters' },
 ];
 
-// Generate quiz using Gemini API
+// Phonics rules
+const PHONICS_RULES: Record<string, { name: string; description: string }> = {
+  'Short A': { name: 'Short A', description: 'The letter "a" makes the /æ/ sound' },
+  'Short E': { name: 'Short E', description: 'The letter "e" makes the /ɛ/ sound' },
+  'Short I': { name: 'Short I', description: 'The letter "i" makes the /ɪ/ sound' },
+  'Short O': { name: 'Short O', description: 'The letter "o" makes the /ɒ/ sound' },
+  'Short U': { name: 'Short U', description: 'The letter "u" makes the /ʌ/ sound' },
+  'Silent E': { name: 'Silent E', description: 'The silent "e" makes the vowel say its name' },
+  'Double Letters': { name: 'Double Letters', description: 'Two same letters make one sound' },
+  'Digraph CH': { name: 'Digraph CH', description: '"ch" makes the /tʃ/ sound' },
+  'Digraph SH': { name: 'Digraph SH', description: '"sh" makes the /ʃ/ sound' },
+  'Digraph TH': { name: 'Digraph TH', description: '"th" makes the /θ/ or /ð/ sound' },
+};
+
+// 이미지 미리 로드
+function preloadImage(url: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve();
+    img.onerror = () => reject();
+    img.src = url;
+  });
+}
+
+// 사용된 단어 추적
+let usedIndices: number[] = [];
+
+// Generate quiz using pre-defined word-image pairs
 export async function generateQuizWithAI(): Promise<QuizLevel | null> {
-  if (!GEMINI_API_KEY) {
-    console.error('Gemini API key not found. Please set VITE_GEMINI_API_KEY in .env');
-    return null;
-  }
-
-  const randomRule = PHONICS_RULES[Math.floor(Math.random() * PHONICS_RULES.length)];
-
-  const prompt = `Generate a simple phonics word for kids.
-Phonics rule: ${randomRule.name}
-
-Reply with ONLY this JSON (nothing else):
-{"word":"cat","sentence":"The ____ is cute.","extra":["x","z"]}
-
-Use a real 3-5 letter English word that follows the phonics rule. Replace "cat" with your word.`;
-
   try {
-    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{ text: prompt }]
-        }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 200,
-        }
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.status}`);
+    // 모든 단어 다 사용했으면 리셋
+    if (usedIndices.length >= WORD_IMAGE_PAIRS.length) {
+      usedIndices = [];
     }
 
-    const data = await response.json();
-    const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    // 사용하지 않은 랜덤 인덱스 선택
+    let randomIndex: number;
+    do {
+      randomIndex = Math.floor(Math.random() * WORD_IMAGE_PAIRS.length);
+    } while (usedIndices.includes(randomIndex));
 
-    if (!textResponse) {
-      throw new Error('No response from Gemini');
+    usedIndices.push(randomIndex);
+
+    const pair = WORD_IMAGE_PAIRS[randomIndex];
+    const rule = PHONICS_RULES[pair.rule];
+
+    // 이미지 미리 로드
+    try {
+      await preloadImage(pair.image);
+    } catch {
+      console.warn('Image preload failed, but continuing...');
     }
 
-    // Parse JSON from response (handle potential markdown code blocks)
-    let jsonStr = textResponse.trim();
-
-    // Remove markdown code blocks if present
-    if (jsonStr.includes('```')) {
-      jsonStr = jsonStr.replace(/```json?\n?/g, '').replace(/```/g, '');
-    }
-
-    // Extract JSON object from response
-    const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('No valid JSON found in response');
-    }
-    jsonStr = jsonMatch[0];
-
-    const parsed = JSON.parse(jsonStr);
-
-    // Map to our expected structure (handle different key names)
-    const generated: GeneratedQuiz = {
-      targetWord: parsed.word || parsed.targetWord,
-      sentence: parsed.sentence,
-      distractors: parsed.extra || parsed.distractors || ['x', 'z'],
-      phonicsRule: {
-        name: randomRule.name,
-        description: randomRule.description,
-        indices: [],
-        color: getRandomColor()
-      }
-    };
-
-    // Generate image using Google Images via serpapi-like free service
-    const searchQuery = encodeURIComponent(generated.targetWord + ' photo');
-
-    // Use loremflickr - 단어 기반 실제 사진 제공 (무료, API 키 불필요)
-    const finalImageUrl = `https://loremflickr.com/512/512/${encodeURIComponent(generated.targetWord)}`;
+    // distractor 글자 생성 (단어에 없는 글자)
+    const wordLetters = new Set(pair.word.toLowerCase().split(''));
+    const allLetters = 'abcdefghijklmnopqrstuvwxyz'.split('');
+    const distractors = allLetters
+      .filter(l => !wordLetters.has(l))
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 2);
 
     // Find indices for phonics rule highlighting
     const indices: number[] = [];
-    const word = generated.targetWord.toLowerCase();
-
-    // Simple logic to find vowels or special patterns
+    const word = pair.word.toLowerCase();
     for (let i = 0; i < word.length; i++) {
       if ('aeiou'.includes(word[i])) {
         indices.push(i);
@@ -126,13 +157,13 @@ Use a real 3-5 letter English word that follows the phonics rule. Replace "cat" 
 
     const quizLevel: QuizLevel = {
       id: `ai-${Date.now()}`,
-      targetWord: generated.targetWord.toLowerCase(),
-      sentence: generated.sentence,
-      imageHint: finalImageUrl,
-      distractors: generated.distractors.map(d => d.toLowerCase()),
+      targetWord: pair.word.toLowerCase(),
+      sentence: pair.sentence,
+      imageHint: pair.image,
+      distractors: distractors,
       phonicsRules: [{
-        name: randomRule.name,
-        description: randomRule.description,
+        name: rule.name,
+        description: rule.description,
         indices: indices.length > 0 ? indices : [0],
         color: getRandomColor(),
       }]
@@ -154,8 +185,6 @@ export async function generateMultipleQuizzes(count: number): Promise<QuizLevel[
     if (quiz) {
       quizzes.push(quiz);
     }
-    // Small delay to avoid rate limiting
-    await new Promise(resolve => setTimeout(resolve, 500));
   }
 
   return quizzes;
@@ -167,7 +196,7 @@ function getRandomColor(): string {
   return colors[Math.floor(Math.random() * colors.length)];
 }
 
-// Check if API key is configured
+// Check if AI is configured (always true now since we use pre-defined pairs)
 export function isAIConfigured(): boolean {
-  return !!GEMINI_API_KEY;
+  return true;
 }
